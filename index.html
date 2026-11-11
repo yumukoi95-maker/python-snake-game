@@ -118,11 +118,11 @@ button:disabled { opacity: .5; }
 </head>
 <body>
 
-<div id="loading">🐍 Loading Player vs T.Koi...</div>
+<div id="loading">🐍 Loading Yayoi vs T.Koi...</div>
 <canvas id="canvas"></canvas>
 
 <div class="top">
-  <div class="panel green">Player: <span id="PlayerScore">0</span></div>
+  <div class="panel green">Yayoi: <span id="YayoiScore">0</span></div>
   <div class="panel blue">T.KOI: <span id="tkoiScore">0</span></div>
   <div class="panel" id="status">READY</div>
 </div>
@@ -508,7 +508,7 @@ function draw() {
 function updateUI() {
   if (!state) return;
 
-  document.getElementById("PlayerScore").textContent =
+  document.getElementById("YayoiScore").textContent =
     state.players[0].score;
 
   document.getElementById("tkoiScore").textContent =
