@@ -3,767 +3,457 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KOI SNAKE - Championship Arena</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KOI SNAKE - Free Roam</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
-
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  padding: 18px;
-  background: #08111f;
-  color: white;
-  font-family: Arial, sans-serif;
-  text-align: center;
-}
-
-h1 {
-  color: #4ade80;
-  font-size: clamp(32px, 7vw, 52px);
-  margin: 8px 0;
-  text-shadow: 0 0 18px #16a34a;
-}
-
-.subtitle {
-  color: #94a3b8;
-  letter-spacing: 3px;
-}
-
-.arena {
-  display: inline-block;
-  max-width: 100%;
-  padding: 7px;
-  background: #172638;
-  border: 2px solid #334155;
-  border-radius: 13px;
-}
-
-canvas {
-  display: block;
-  width: min(92vw, 720px);
-  height: auto;
-  background: #07111e;
-  border-radius: 7px;
-}
-
-.panel {
-  max-width: 760px;
-  margin: 18px auto;
-  padding: 15px;
-  background: #142235;
-  border: 1px solid #334155;
-  border-radius: 12px;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-  gap: 8px;
-}
-
-.stat {
-  padding: 10px 4px;
-  border-radius: 8px;
-  background: #0b1728;
-  font-size: 12px;
-  font-weight: bold;
-}
-
-.stat b {
-  display: block;
-  margin-top: 6px;
-  font-size: 16px;
-}
-
-button {
-  border: 0;
-  border-radius: 9px;
-  padding: 12px 20px;
-  margin: 5px;
-  background: #22c55e;
-  color: #07111e;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: .5;
-  cursor: not-allowed;
-}
-
-.secondary {
-  background: #334155;
-  color: white;
-}
-
-.controls {
-  margin: 12px auto;
-}
-
-.controls button {
-  min-width: 65px;
-  font-size: 19px;
-}
-
-#status {
-  color: #facc15;
-  min-height: 22px;
-}
-
-#leaderboard {
-  text-align: left;
-  max-width: 450px;
-  margin: auto;
-}
-
-.rank {
-  display: flex;
-  justify-content: space-between;
-  padding: 9px;
-  margin: 5px 0;
-  background: #0b1728;
-  border-radius: 7px;
-}
-
-footer {
-  color: #64748b;
-  margin: 25px;
-  font-size: 12px;
+*{box-sizing:border-box}
+body{margin:0;background:#07111e;color:white;font-family:Arial,sans-serif;overflow:hidden}
+canvas{display:block;width:100vw;height:100vh;background:#07111e}
+#title{position:fixed;z-index:5;top:8px;left:50%;transform:translateX(-50%);color:#4ade80;font-size:26px;font-weight:bold;text-shadow:0 0 15px #16a34a;pointer-events:none}
+#status{position:fixed;z-index:5;top:45px;left:50%;transform:translateX(-50%);background:#101f30dd;padding:7px 12px;border-radius:8px;color:#facc15;font-size:13px;pointer-events:none}
+.panel{position:fixed;z-index:4;background:#102137dd;backdrop-filter:blur(6px);border:1px solid #334155;border-radius:10px;padding:10px}
+#scores{top:85px;left:10px;width:190px;max-height:43vh;overflow:auto}
+#scores h3,#board h3{margin:2px 0 10px;color:#4ade80}
+#stats{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
+.stat{padding:6px 4px;background:#07111e;border-radius:5px;font-size:11px}
+.stat b{display:block;margin-top:3px;font-size:13px}
+#board{bottom:10px;left:10px;width:190px;max-height:35vh;overflow:auto}
+.rank{display:flex;justify-content:space-between;padding:5px;margin:3px 0;background:#07111e;border-radius:5px;font-size:12px}
+button{border:0;border-radius:8px;padding:11px 15px;background:#22c55e;color:#07111e;font-weight:bold;cursor:pointer}
+#start,#pause{position:fixed;z-index:6;right:12px;top:85px}
+#pause{top:132px;background:#334155;color:white}
+.controls{position:fixed;z-index:6;right:12px;bottom:12px;text-align:center}
+.controls button{min-width:49px;font-size:19px;margin:3px}
+#help{position:fixed;bottom:10px;left:220px;color:#94a3b8;font-size:11px}
+@media(max-width:600px){
+ #scores{width:130px;top:75px}
+ #board{width:130px;bottom:5px}
+ #help{display:none}
+ #title{font-size:21px}
+ #status{top:40px;font-size:11px}
+ .controls button{min-width:40px;padding:9px}
 }
 </style>
 </head>
-
 <body>
 
-<h1>🐍 KOI SNAKE</h1>
-<p class="subtitle">ULTIMATE CHAMPIONSHIP ARENA</p>
+<div id="title">🐍 KOI SNAKE</div>
+<div id="status">Loading Python engine...</div>
 
-<div class="arena">
-  <canvas id="game" width="720" height="720"></canvas>
+<canvas id="game"></canvas>
+
+<div class="panel" id="scores">
+<h3>🐍 SNAKE SCORES</h3>
+<div id="stats"></div>
 </div>
 
-<h3 id="status">Loading Python engine...</h3>
-
-<button id="start" disabled>START GAME</button>
-<button id="pause" class="secondary" disabled>PAUSE</button>
-
-<div class="panel">
-  <h2>🏆 SNAKE SCOREBOARD</h2>
-  <div class="stats" id="stats"></div>
+<div class="panel" id="board">
+<h3>🏆 LEADERBOARD</h3>
+<div id="leaderboard"></div>
 </div>
 
-<div class="panel">
-  <h2>👑 CHAMPIONSHIP RANKING</h2>
-  <div id="leaderboard"></div>
-</div>
-
-<h3>🎮 CONTROLS</h3>
+<button id="start" disabled>START</button>
+<button id="pause" disabled>PAUSE</button>
 
 <div class="controls">
-  <div><button data-dir="UP">⬆️</button></div>
-  <div>
-    <button data-dir="LEFT">⬅️</button>
-    <button data-dir="DOWN">⬇️</button>
-    <button data-dir="RIGHT">➡️</button>
-  </div>
+<div><button data-dir="UP">⬆️</button></div>
+<div>
+<button data-dir="LEFT">⬅️</button>
+<button data-dir="DOWN">⬇️</button>
+<button data-dir="RIGHT">➡️</button>
+</div>
 </div>
 
-<p style="color:#94a3b8">
-Koi is your snake. The other 17 snakes are NPC rivals.
-</p>
-
-<footer>KOI SNAKE © Championship Edition</footer>
+<div id="help">Arrow keys to move Koi • Collect apples • Touching snakes is safe!</div>
 
 <script>
+const W=60,H=36,CELL=20;
+const NAMES=[
+"Koi","Sowa","Kyoma","Fumio","Sora","Yayoi","Matoi",
+"Mahiro","T.Thomas","T.Anna","T.Mitchelle","T.Kato",
+"YUzuki.K","Honoka","Anne","Yuika","Aisei","Babubabu"
+];
 
-const pythonCode = `
-import random
-import json
+const COLORS=[
+"#4ade80","#60a5fa","#c084fc","#fb923c","#22d3ee",
+"#f472b6","#facc15","#ef4444","#a3e635","#e879f9",
+"#38bdf8","#f97316","#2dd4bf","#fb7185","#818cf8",
+"#d946ef","#bef264","#f5f5f4"
+];
 
-W = 36
-H = 36
+const colorMap=Object.fromEntries(NAMES.map((n,i)=>[n,COLORS[i]]));
 
-NAMES = [
-    "Koi", "Sowa", "Kyoma", "Fumio", "Sora",
-    "Yayoi", "Matoi", "Mahiro", "T.Thomas",
-    "T.Anna", "T.Mitchelle", "T.Kato",
-    "YUzuki.K", "Honoka", "Anne", "Yuika",
-    "Aisei", "Babubabu"
+const pythonCode=`
+import random,json
+
+W=60
+H=36
+
+NAMES=[
+"Koi","Sowa","Kyoma","Fumio","Sora","Yayoi","Matoi",
+"Mahiro","T.Thomas","T.Anna","T.Mitchelle","T.Kato",
+"YUzuki.K","Honoka","Anne","Yuika","Aisei","Babubabu"
 ]
 
-def make_snake(name, body, direction):
+def make_snake(name,body,direction):
     return {
-        "name": name,
-        "body": body,
-        "direction": direction,
-        "next": direction,
-        "score": 0,
-        "alive": True,
-        "respawn": 0
+        "name":name,
+        "body":body,
+        "direction":direction,
+        "next":direction,
+        "score":0
     }
 
 def reset_game():
-    global players, food, game_over, tick_count
+    global players,food,tick_count
 
-    players = []
+    players=[]
+    for i,name in enumerate(NAMES):
+        col=i%6
+        row=i//6
+        x=4+col*10
+        y=5+row*12
 
-    positions = [1, 7, 13, 19, 25, 31]
-    rows = [2, 16, 30]
+        d=(1,0) if col%2==0 else (-1,0)
+        head=(x+2,y)
 
-    for i, name in enumerate(NAMES):
-        row = i // 6
-        col = i % 6
-
-        x = positions[col]
-        y = rows[row]
-
-        direction = (1, 0) if col % 2 == 0 else (-1, 0)
-
-        head = (x + 2, y)
-
-        body = [
+        body=[
             head,
-            (head[0] - direction[0], y),
-            (head[0] - 2 * direction[0], y)
+            (head[0]-d[0],y),
+            (head[0]-2*d[0],y)
         ]
 
-        players.append(make_snake(name, body, direction))
+        players.append(make_snake(name,body,d))
 
-    game_over = False
-    tick_count = 0
+    tick_count=0
     spawn_food()
 
 def occupied_cells():
-    cells = set()
-
+    cells=set()
     for p in players:
-        if p["alive"]:
-            cells.update(p["body"])
-
+        cells.update(p["body"])
     return cells
 
 def spawn_food():
     global food
-
-    empty = [
-        (x, y)
-        for x in range(W)
+    occupied=occupied_cells()
+    empty=[
+        (x,y) for x in range(W)
         for y in range(H)
-        if (x, y) not in occupied_cells()
+        if (x,y) not in occupied
     ]
-
-    food = random.choice(empty) if empty else None
+    food=random.choice(empty) if empty else None
 
 def change_direction(name):
-    directions = {
-        "UP": (0, -1),
-        "DOWN": (0, 1),
-        "LEFT": (-1, 0),
-        "RIGHT": (1, 0)
+    directions={
+        "UP":(0,-1),
+        "DOWN":(0,1),
+        "LEFT":(-1,0),
+        "RIGHT":(1,0)
     }
-
-    d = directions.get(name)
-
-    if d and d != (
-        -players[0]["direction"][0],
-        -players[0]["direction"][1]
-    ):
-        players[0]["next"] = d
-
-def safe_cell(cell, occupied):
-    x, y = cell
-
-    return (
-        0 <= x < W and
-        0 <= y < H and
-        cell not in occupied
-    )
+    d=directions.get(name)
+    current=players[0]["direction"]
+    if d and d!=(-current[0],-current[1]):
+        players[0]["next"]=d
 
 def rival_direction(p):
-    current = p["direction"]
-
-    directions = [
-        (1, 0), (-1, 0), (0, 1), (0, -1)
-    ]
-
-    occupied = occupied_cells()
-
-    if p["body"]:
-        occupied.discard(p["body"][-1])
-
-    candidates = [
+    current=p["direction"]
+    directions=[(1,0),(-1,0),(0,1),(0,-1)]
+    candidates=[
         d for d in directions
-        if d != (-current[0], -current[1])
+        if d!=(-current[0],-current[1])
     ]
 
-    head = p["body"][0]
-    valid = []
+    head=p["body"][0]
+    random.shuffle(candidates)
 
-    for d in candidates:
-        target = (
-            head[0] + d[0],
-            head[1] + d[1]
+    if food:
+        candidates.sort(
+            key=lambda d:
+            abs((head[0]+d[0])%W-food[0])
+            +abs((head[1]+d[1])%H-food[1])
         )
 
-        if safe_cell(target, occupied):
-            if food:
-                distance = (
-                    abs(target[0] - food[0]) +
-                    abs(target[1] - food[1])
-                )
-            else:
-                distance = 0
-
-            valid.append((
-                distance + random.random() * 3,
-                d
-            ))
-
-    if valid:
-        valid.sort(key=lambda item: item[0])
-        return valid[0][1]
-
-    return current
-
-def respawn_rival(p):
-    occupied = occupied_cells()
-
-    for _ in range(200):
-        x = random.randint(2, W - 3)
-        y = random.randint(2, H - 3)
-
-        d = random.choice([
-            (1, 0), (-1, 0), (0, 1), (0, -1)
-        ])
-
-        body = [
-            (x, y),
-            (x - d[0], y - d[1]),
-            (x - 2*d[0], y - 2*d[1])
-        ]
-
-        if all(safe_cell(c, occupied) for c in body):
-            p["body"] = body
-            p["direction"] = d
-            p["next"] = d
-            p["alive"] = True
-            p["respawn"] = 0
-            return
+    return candidates[0]
 
 def step():
-    global game_over, food, tick_count
+    global food,tick_count
 
-    if game_over:
-        return get_state()
+    tick_count+=1
+    ate=False
 
-    tick_count += 1
-    moves = []
+    for i,p in enumerate(players):
+        d=p["next"] if i==0 else rival_direction(p)
+        p["direction"]=d
 
-    for i, p in enumerate(players):
-        if not p["alive"]:
-            if i > 0:
-                p["respawn"] -= 1
-
-                if p["respawn"] <= 0:
-                    respawn_rival(p)
-
-            continue
-
-        d = p["next"] if i == 0 else rival_direction(p)
-        p["direction"] = d
-
-        head = p["body"][0]
-
-        new_head = (
-            head[0] + d[0],
-            head[1] + d[1]
+        head=p["body"][0]
+        new_head=(
+            (head[0]+d[0])%W,
+            (head[1]+d[1])%H
         )
 
-        eating = new_head == food
+        # Snakes can overlap without collision or elimination.
+        p["body"].insert(0,new_head)
 
-        moves.append((i, new_head, eating))
-
-    occupied = set()
-
-    for i, p in enumerate(players):
-        if p["alive"]:
-            eating = any(
-                m[0] == i and m[2] for m in moves
-            )
-
-            occupied.update(
-                p["body"] if eating else p["body"][:-1]
-            )
-
-    collisions = set()
-    new_heads = [m[1] for m in moves]
-
-    for i, head, eating in moves:
-        if not safe_cell(head, occupied):
-            collisions.add(i)
-
-    for i, head, eating in moves:
-        if new_heads.count(head) > 1:
-            collisions.add(i)
-
-    # Detect head-to-head swaps.
-    old_heads = {
-        i: players[i]["body"][0]
-        for i, _, _ in moves
-    }
-
-    for i, head, eating in moves:
-        for j, other_head in old_heads.items():
-            if i != j and head == other_head:
-                other_move = next(m for m in moves if m[0] == j)
-
-                if other_move[1] == old_heads[i]:
-                    collisions.add(i)
-                    collisions.add(j)
-
-    ate_food = False
-
-    for i, head, eating in moves:
-        p = players[i]
-
-        if i in collisions:
-            p["alive"] = False
-
-            if i == 0:
-                game_over = True
-            else:
-                p["respawn"] = 18
-
-            continue
-
-        p["body"].insert(0, head)
-
-        if eating:
-            p["score"] += 1
-            ate_food = True
+        if new_head==food:
+            p["score"]+=1
+            ate=True
         else:
             p["body"].pop()
 
-    if ate_food:
+    if ate:
         spawn_food()
 
     return get_state()
 
 def get_state():
     return json.dumps({
-        "players": [
+        "players":[
             {
-                "name": p["name"],
-                "body": p["body"],
-                "score": p["score"],
-                "alive": p["alive"]
-            }
-            for p in players
+                "name":p["name"],
+                "body":p["body"],
+                "score":p["score"]
+            } for p in players
         ],
-        "food": food,
-        "game_over": game_over,
-        "ticks": tick_count
+        "food":food,
+        "ticks":tick_count
     })
 
 reset_game()
 `;
 
-const colors = {
-  "Koi": "#4ade80",
-  "Fumichan": "#60a5fa",
-  "Kyoma": "#c084fc",
-  "Fumio": "#fb923c",
-  "Ao": "#22d3ee",
-  "Yayoi": "#f472b6",
-  "Matoi": "#facc15",
-  "Mahiro": "#ef4444",
-  "T.Thomas": "#a3e635",
-  "T.Anna": "#e879f9",
-  "T.Mitchelle": "#38bdf8",
-  "T.Kato": "#f97316",
-  "YUzuki.K": "#2dd4bf",
-  "Honoka": "#fb7185",
-  "Anne": "#818cf8",
-  "Yuika": "#d946ef",
-  "Yuto": "#bef264",
-  "Rintaro": "#f5f5f4"
-};
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const statusEl=document.getElementById("status");
+const startBtn=document.getElementById("start");
+const pauseBtn=document.getElementById("pause");
 
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+let pyodide=null,timer=null,paused=false;
+let cameraX=0,cameraY=0;
+let latestState=null;
 
-const startBtn = document.getElementById("start");
-const pauseBtn = document.getElementById("pause");
-const statusEl = document.getElementById("status");
+const stats=document.getElementById("stats");
+const leaderboard=document.getElementById("leaderboard");
 
-const statsContainer = document.getElementById("stats");
-const leaderboard = document.getElementById("leaderboard");
-
-const CELL = 20;
-const SIZE = 720;
-
-let pyodide = null;
-let timer = null;
-let paused = false;
-
-const names = Object.keys(colors);
-
-// Create scoreboard
-names.forEach((name, i) => {
-  const div = document.createElement("div");
-  div.className = "stat";
-  div.style.color = colors[name];
-
-  div.textContent = name;
-
-  const score = document.createElement("b");
-  score.id = "score-" + i;
-  score.textContent = "0";
-
-  div.appendChild(score);
-  statsContainer.appendChild(div);
+NAMES.forEach((name,i)=>{
+ const div=document.createElement("div");
+ div.className="stat";
+ div.style.color=COLORS[i];
+ div.textContent=name;
+ const b=document.createElement("b");
+ b.id="score-"+i;
+ b.textContent="0";
+ div.appendChild(b);
+ stats.appendChild(div);
 });
 
-function getState() {
-  return JSON.parse(pyodide.runPython("get_state()"));
+function resize(){
+ const dpr=Math.min(window.devicePixelRatio||1,2);
+ canvas.width=Math.round(innerWidth*dpr);
+ canvas.height=Math.round(innerHeight*dpr);
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+}
+window.addEventListener("resize",resize);
+resize();
+
+function getState(){
+ return JSON.parse(pyodide.runPython("get_state()"));
 }
 
-function draw(s) {
-  ctx.fillStyle = "#07111e";
-  ctx.fillRect(0, 0, SIZE, SIZE);
+function draw(s){
+ latestState=s;
 
-  // Grid
-  ctx.strokeStyle = "#14273a";
-  ctx.lineWidth = 1;
+ const vw=innerWidth;
+ const vh=innerHeight;
 
-  for(let x = 0; x <= SIZE; x += CELL) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, SIZE);
-    ctx.stroke();
-  }
+ const scale=Math.min(vw/W,vh/H);
+ const visibleW=vw/scale;
+ const visibleH=vh/scale;
 
-  for(let y = 0; y <= SIZE; y += CELL) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(SIZE, y);
-    ctx.stroke();
-  }
+ const koi=s.players[0].body[0];
 
-  // Food
-  if(s.food) {
-    const [x, y] = s.food;
+ cameraX=Math.max(0,Math.min(W-visibleW,koi[0]-visibleW/2));
+ cameraY=Math.max(0,Math.min(H-visibleH,koi[1]-visibleH/2));
 
-    ctx.fillStyle = "#ef4444";
-    ctx.beginPath();
-    ctx.arc(
-      x * CELL + 10,
-      y * CELL + 11,
-      7, 0, Math.PI * 2
-    );
-    ctx.fill();
+ // Center small leftover view when viewport is larger than world.
+ const offsetX=Math.max(0,(vw-visibleW*scale)/2);
+ const offsetY=Math.max(0,(vh-visibleH*scale)/2);
 
-    ctx.fillStyle = "#4ade80";
-    ctx.fillRect(x * CELL + 11, y * CELL + 1, 3, 6);
-  }
+ ctx.fillStyle="#07111e";
+ ctx.fillRect(0,0,vw,vh);
 
-  // Draw all snakes
-  for(const p of s.players) {
-    if(!p.alive) continue;
+ ctx.save();
+ ctx.translate(offsetX-cameraX*scale,offsetY-cameraY*scale);
+ ctx.scale(scale,scale);
 
-    const color = colors[p.name];
+ // Large arena background
+ ctx.fillStyle="#0b1928";
+ ctx.fillRect(0,0,W*CELL,H*CELL);
 
-    p.body.forEach(([x, y], i) => {
-      ctx.fillStyle = color;
-      ctx.globalAlpha = i === 0 ? 1 : 0.82;
+ // Grid
+ ctx.strokeStyle="#172d40";
+ ctx.lineWidth=1;
+ for(let x=0;x<=W;x++){
+  ctx.beginPath();
+  ctx.moveTo(x*CELL,0);
+  ctx.lineTo(x*CELL,H*CELL);
+  ctx.stroke();
+ }
+ for(let y=0;y<=H;y++){
+  ctx.beginPath();
+  ctx.moveTo(0,y*CELL);
+  ctx.lineTo(W*CELL,y*CELL);
+  ctx.stroke();
+ }
 
-      ctx.beginPath();
-      ctx.roundRect(
-        x * CELL + 1,
-        y * CELL + 1,
-        18,
-        18,
-        5
-      );
-      ctx.fill();
-    });
+ // Arena border
+ ctx.strokeStyle="#4ade80";
+ ctx.lineWidth=5;
+ ctx.strokeRect(0,0,W*CELL,H*CELL);
 
-    ctx.globalAlpha = 1;
+ // Apple
+ if(s.food){
+  const [x,y]=s.food;
+  ctx.fillStyle="#ef4444";
+  ctx.beginPath();
+  ctx.arc(x*CELL+10,y*CELL+11,7,0,Math.PI*2);
+  ctx.fill();
+  ctx.fillStyle="#4ade80";
+  ctx.fillRect(x*CELL+11,y*CELL+1,3,6);
+ }
 
-    const [hx, hy] = p.body[0];
+ // Snakes
+ for(const p of s.players){
+  const color=colorMap[p.name];
 
-    // Eyes
-    ctx.fillStyle = "#07111e";
-
-    ctx.beginPath();
-    ctx.arc(hx * CELL + 6, hy * CELL + 6, 2, 0, Math.PI * 2);
-    ctx.arc(hx * CELL + 14, hy * CELL + 6, 2, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Name label
-    ctx.font = "bold 10px Arial";
-    ctx.textAlign = "center";
-
-    const labelY = Math.max(11, hy * CELL - 5);
-    const labelWidth = ctx.measureText(p.name).width + 8;
-
-    ctx.fillStyle = "#020817";
-    ctx.fillRect(
-      hx * CELL + 10 - labelWidth / 2,
-      labelY - 10,
-      labelWidth,
-      13
-    );
-
-    ctx.fillStyle = color;
-    ctx.fillText(p.name, hx * CELL + 10, labelY);
-  }
-
-  // Scoreboard
-  s.players.forEach((p, i) => {
-    const score = document.getElementById("score-" + i);
-
-    score.textContent =
-      p.score + (p.alive ? "" : " OUT");
+  p.body.forEach(([x,y],i)=>{
+   ctx.fillStyle=color;
+   ctx.globalAlpha=i===0?1:0.8;
+   ctx.beginPath();
+   ctx.roundRect(x*CELL+1,y*CELL+1,18,18,5);
+   ctx.fill();
   });
+  ctx.globalAlpha=1;
 
-  // Leaderboard
-  const sorted = [...s.players].sort(
-    (a, b) => b.score - a.score
-  );
+  const [hx,hy]=p.body[0];
 
-  leaderboard.innerHTML = "";
+  // Eyes
+  ctx.fillStyle="#07111e";
+  ctx.beginPath();
+  ctx.arc(hx*CELL+6,hy*CELL+6,2,0,Math.PI*2);
+  ctx.arc(hx*CELL+14,hy*CELL+6,2,0,Math.PI*2);
+  ctx.fill();
 
-  sorted.forEach((p, i) => {
-    const row = document.createElement("div");
-    row.className = "rank";
+  // Name label
+  ctx.font="bold 10px Arial";
+  ctx.textAlign="center";
+  const width=ctx.measureText(p.name).width+8;
+  const ly=hy*CELL-4;
 
-    const name = document.createElement("span");
-    name.textContent = (i + 1) + ". " + p.name;
-    name.style.color = colors[p.name];
+  ctx.fillStyle="#020817";
+  ctx.fillRect(hx*CELL+10-width/2,ly-10,width,13);
+  ctx.fillStyle=color;
+  ctx.fillText(p.name,hx*CELL+10,ly);
+ }
 
-    const points = document.createElement("b");
-    points.textContent = p.score + " pts";
+ ctx.restore();
 
-    row.append(name, points);
-    leaderboard.appendChild(row);
-  });
+ // Scores
+ s.players.forEach((p,i)=>{
+  document.getElementById("score-"+i).textContent=p.score;
+ });
+
+ // Leaderboard
+ const sorted=[...s.players].sort((a,b)=>b.score-a.score);
+ leaderboard.replaceChildren();
+
+ sorted.forEach((p,i)=>{
+  const row=document.createElement("div");
+  row.className="rank";
+  const n=document.createElement("span");
+  n.textContent=(i+1)+". "+p.name;
+  n.style.color=colorMap[p.name];
+  const score=document.createElement("b");
+  score.textContent=p.score;
+  row.append(n,score);
+  leaderboard.appendChild(row);
+ });
 }
 
-function tick() {
-  const s = JSON.parse(pyodide.runPython("step()"));
-
-  draw(s);
-
-  if(s.game_over) {
-    clearInterval(timer);
-    timer = null;
-
-    statusEl.textContent =
-      "🏁 GAME OVER! Koi has been defeated!";
-  }
+function tick(){
+ const s=JSON.parse(pyodide.runPython("step()"));
+ draw(s);
 }
 
-function startGame() {
-  if(!pyodide) return;
+function startGame(){
+ if(!pyodide)return;
+ clearInterval(timer);
+ pyodide.runPython("reset_game()");
+ paused=false;
+ pauseBtn.textContent="PAUSE";
+ draw(getState());
+ statusEl.textContent="APPLE HUNT! ALL SNAKES ARE SAFE!";
+ timer=setInterval(tick,130);
+}
 
+function changeDirection(dir){
+ if(!pyodide)return;
+ pyodide.globals.set("requested_dir",dir);
+ pyodide.runPython("change_direction(requested_dir)");
+}
+
+document.addEventListener("keydown",e=>{
+ const keys={
+  ArrowUp:"UP",ArrowDown:"DOWN",
+  ArrowLeft:"LEFT",ArrowRight:"RIGHT",
+  w:"UP",s:"DOWN",a:"LEFT",d:"RIGHT"
+ };
+ if(keys[e.key]){
+  e.preventDefault();
+  changeDirection(keys[e.key]);
+ }
+});
+
+document.querySelectorAll("[data-dir]").forEach(btn=>{
+ btn.addEventListener("click",()=>changeDirection(btn.dataset.dir));
+});
+
+startBtn.addEventListener("click",startGame);
+
+pauseBtn.addEventListener("click",()=>{
+ if(!timer&&!paused)return;
+
+ if(paused){
+  timer=setInterval(tick,130);
+  paused=false;
+  pauseBtn.textContent="PAUSE";
+  statusEl.textContent="GAME RESUMED!";
+ }else{
   clearInterval(timer);
+  timer=null;
+  paused=true;
+  pauseBtn.textContent="RESUME";
+  statusEl.textContent="GAME PAUSED!";
+ }
+});
 
-  pyodide.runPython("reset_game()");
-
-  paused = false;
-  pauseBtn.textContent = "PAUSE";
-
+async function initialize(){
+ try{
+  statusEl.textContent="Loading Python...";
+  pyodide=await loadPyodide();
+  pyodide.runPython(pythonCode);
   draw(getState());
-
-  statusEl.textContent =
-    "🔥 KOI SNAKE CHAMPIONSHIP STARTED!";
-
-  timer = setInterval(tick, 130);
-}
-
-function changeDirection(dir) {
-  if(!pyodide) return;
-
-  pyodide.globals.set("requested_dir", dir);
-
-  pyodide.runPython(
-    "change_direction(requested_dir)"
-  );
-}
-
-// Keyboard controls
-document.addEventListener("keydown", e => {
-  const keys = {
-    ArrowUp: "UP",
-    ArrowDown: "DOWN",
-    ArrowLeft: "LEFT",
-    ArrowRight: "RIGHT"
-  };
-
-  if(keys[e.key]) {
-    e.preventDefault();
-    changeDirection(keys[e.key]);
-  }
-});
-
-// Mobile controls
-document.querySelectorAll("[data-dir]").forEach(btn => {
-  btn.addEventListener("click", () => {
-    changeDirection(btn.dataset.dir);
-  });
-});
-
-// Start
-startBtn.addEventListener("click", startGame);
-
-// Pause
-pauseBtn.addEventListener("click", () => {
-  if(!timer && !paused) return;
-
-  if(paused) {
-    timer = setInterval(tick, 130);
-    paused = false;
-
-    pauseBtn.textContent = "PAUSE";
-    statusEl.textContent = "GAME RESUMED!";
-  } else {
-    clearInterval(timer);
-    timer = null;
-    paused = true;
-
-    pauseBtn.textContent = "RESUME";
-    statusEl.textContent = "GAME PAUSED!";
-  }
-});
-
-// Initialize Python
-async function initialize() {
-  try {
-    pyodide = await loadPyodide();
-
-    pyodide.runPython(pythonCode);
-
-    draw(getState());
-
-    statusEl.textContent =
-      "🐍 ALL 18 SNAKES ARE READY!";
-
-    startBtn.disabled = false;
-    pauseBtn.disabled = false;
-
-  } catch(error) {
-    statusEl.textContent =
-      "Python error: " + error.message;
-
-    console.error(error);
-  }
+  startBtn.disabled=false;
+  pauseBtn.disabled=false;
+  statusEl.textContent="18 SNAKES READY! PRESS START!";
+ }catch(e){
+  statusEl.textContent="ERROR: "+e.message;
+  console.error(e);
+ }
 }
 
 initialize();
-
 </script>
 </body>
 </html>
