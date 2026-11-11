@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YUika VS T.Koi - Snake Game</title>
+<title>YUika VS T.Koi</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <style>
 * { box-sizing: border-box; }
@@ -14,12 +14,6 @@ body {
   background: #07111f;
   color: white;
   font-family: Arial, sans-serif;
-}
-#game {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100%;
 }
 canvas {
   display: block;
@@ -40,16 +34,28 @@ canvas {
   z-index: 2;
 }
 .panel {
-  background: #101f34eF;
+  background: #101f34ee;
   border: 1px solid #38516d;
   border-radius: 12px;
   padding: 9px 16px;
   font-weight: bold;
-  box-shadow: 0 4px 18px #0007;
 }
 .green { color: #5dff91; }
 .blue { color: #69baff; }
 #status { color: #ffd66b; }
+#controllerStatus {
+  position: fixed;
+  top: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #101f34dd;
+  border: 1px solid #38516d;
+  border-radius: 9px;
+  padding: 7px 12px;
+  font-size: 12px;
+  z-index: 2;
+  white-space: nowrap;
+}
 .controls {
   position: fixed;
   bottom: 15px;
@@ -57,7 +63,6 @@ canvas {
   transform: translateX(-50%);
   display: flex;
   gap: 9px;
-  align-items: center;
   z-index: 3;
 }
 button {
@@ -70,8 +75,8 @@ button {
   font-weight: bold;
   cursor: pointer;
 }
-button:disabled { opacity: .5; cursor: wait; }
 button:hover { background: #294968; }
+button:disabled { opacity: .5; }
 .mobile {
   position: fixed;
   right: 18px;
@@ -104,6 +109,7 @@ button:hover { background: #294968; }
 @media (max-width: 650px) {
   .top { gap: 5px; top: 7px; }
   .panel { padding: 7px 9px; font-size: 12px; }
+  #controllerStatus { top: 55px; font-size: 10px; }
   .controls { bottom: 10px; gap: 5px; }
   button { padding: 10px 12px; font-size: 12px; }
   .mobile { right: 10px; bottom: 78px; }
@@ -113,16 +119,15 @@ button:hover { background: #294968; }
 <body>
 
 <div id="loading">🐍 Loading Yuika vs T.Koi...</div>
-
-<div id="game">
-  <canvas id="canvas"></canvas>
-</div>
+<canvas id="canvas"></canvas>
 
 <div class="top">
-  <div class="panel green">YUika: <span id="yuikaScore">0</span></div>
-  <div class="panel blue">T.Koi: <span id="tkoiScore">0</span></div>
+  <div class="panel green">YUIKA: <span id="yuikaScore">0</span></div>
+  <div class="panel blue">T.KOI: <span id="tkoiScore">0</span></div>
   <div class="panel" id="status">READY</div>
 </div>
+
+<div id="controllerStatus">🎮 Connect your PlayStation controller</div>
 
 <div class="controls">
   <button id="startBtn" disabled>Loading...</button>
@@ -147,9 +152,13 @@ let pyodide;
 let running = false;
 let gameOver = false;
 let timer = null;
+let state = null;
+
 let playerDirection = {x: 1, y: 0};
 let lastDirection = {x: 1, y: 0};
-let state = null;
+
+let gamepadIndex = null;
+let previousButtons = [];
 
 const directions = {
   up: {x: 0, y: -1},
@@ -219,8 +228,7 @@ def safe_direction(p, direction):
     if nx < 0 or nx >= W or ny < 0 or ny >= H:
         return False
 
-    body = p["body"][:-1]
-    if (nx, ny) in body:
+    if (nx, ny) in p["body"][:-1]:
         return False
 
     return True
@@ -233,17 +241,10 @@ def tkoi_ai():
 
     hx, hy = p["body"][0]
     ax, ay = apple
-
     current = p["direction"]
 
-    options = [
-        (1, 0),
-        (-1, 0),
-        (0, 1),
-        (0, -1)
-    ]
+    options = [(1,0),(-1,0),(0,1),(0,-1)]
 
-    # Never reverse directly into its own body.
     options = [
         d for d in options
         if not (d[0] == -current[0] and d[1] == -current[1])
@@ -256,8 +257,7 @@ def tkoi_ai():
 
     safe.sort(
         key=lambda d:
-        abs(hx + d[0] - ax) + abs(hy + d[1] - ay)
-        + random.random() * 0.3
+        abs(hx+d[0]-ax) + abs(hy+d[1]-ay) + random.random()*0.3
     )
 
     return safe[0]
@@ -284,21 +284,17 @@ def step(dx, dy):
     if game_over:
         return get_state()
 
-    # Update Yuika's direction.
     current = players[0]["direction"]
 
     if not (dx == -current[0] and dy == -current[1]):
         players[0]["direction"] = (dx, dy)
 
-    # T.Koi chooses its own direction.
     players[1]["direction"] = tkoi_ai()
 
     new_bodies = []
     died = [False, False]
     ate = [False, False]
 
-    # Move both snakes independently.
-    # Touching the other snake is completely safe.
     for i, p in enumerate(players):
         hx, hy = p["body"][0]
         vx, vy = p["direction"]
@@ -318,13 +314,13 @@ def step(dx, dy):
         if not ate[i]:
             new_body.pop()
 
-        # Only check collision with its OWN body.
+        # Only collision with its OWN body causes death.
+        # Touching or crossing the other snake is safe.
         if new_head in new_body[1:]:
             died[i] = True
 
         new_bodies.append(new_body)
 
-    # Apply the movements.
     for i, p in enumerate(players):
         p["body"] = new_bodies[i]
 
@@ -333,17 +329,16 @@ def step(dx, dy):
 
         if died[0] and died[1]:
             winner = "DRAW"
-            message = "Both snakes hit themselves or a wall!"
+            message = "Both snakes crashed!"
         elif died[0]:
             winner = "T.Koi"
-            message = "Yuika hit a wall or its own body!"
+            message = "Yuika crashed!"
         else:
             winner = "Yuika"
-            message = "T.Koi hit a wall or its own body!"
+            message = "T.Koi crashed!"
 
         return get_state()
 
-    # Award apple points.
     for i, p in enumerate(players):
         if ate[i]:
             p["score"] += 1
@@ -354,7 +349,7 @@ def step(dx, dy):
         if apple is None:
             game_over = True
             winner = "DRAW"
-            message = "Amazing! The board is full!"
+            message = "The board is full!"
 
     return get_state()
 
@@ -381,13 +376,12 @@ function draw() {
   const ox = (width - boardW) / 2;
   const oy = (height - boardH) / 2;
 
-  ctx.fillStyle = "#0b1a2b";
+  ctx.fillStyle = "#07111f";
   ctx.fillRect(0, 0, width, height);
 
   ctx.fillStyle = "#10263a";
   ctx.fillRect(ox, oy, boardW, boardH);
 
-  // Grid
   ctx.strokeStyle = "#1d3850";
   ctx.lineWidth = 0.6;
 
@@ -419,11 +413,15 @@ function draw() {
     ctx.fill();
 
     ctx.fillStyle = "#7cff76";
-    ctx.fillRect(cx + cell * 0.06, cy - cell * 0.42,
-                 cell * 0.12, cell * 0.23);
+    ctx.fillRect(
+      cx + cell * 0.06,
+      cy - cell * 0.42,
+      cell * 0.12,
+      cell * 0.23
+    );
   }
 
-  // Snakes
+  // Draw snake bodies
   state.players.forEach((p, index) => {
     const color = index === 0 ? "#42ed83" : "#46a9ff";
     const dark = index === 0 ? "#168f50" : "#1769b6";
@@ -456,7 +454,52 @@ function draw() {
     });
   });
 
-  // Arena border
+  // Character names above each snake's head
+  state.players.forEach((p, index) => {
+    const [x, y] = p.body[0];
+    const color = index === 0 ? "#42ed83" : "#46a9ff";
+
+    const headX = ox + (x + 0.5) * cell;
+    const headY = oy + y * cell;
+
+    const label = p.name.toUpperCase();
+    const fontSize = Math.max(10, Math.min(15, cell * 0.55));
+
+    ctx.save();
+    ctx.font = `bold ${fontSize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    const textWidth = ctx.measureText(label).width;
+    const boxWidth = textWidth + 12;
+    const boxHeight = fontSize + 7;
+
+    let labelY = headY - boxHeight - 3;
+
+    if (labelY < 2) {
+      labelY = headY + cell + 3;
+    }
+
+    ctx.fillStyle = "#07111f";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.roundRect(
+      headX - boxWidth / 2,
+      labelY,
+      boxWidth,
+      boxHeight,
+      6
+    );
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = color;
+    ctx.fillText(label, headX, labelY + boxHeight / 2);
+    ctx.restore();
+  });
+
   ctx.strokeStyle = "#6d8ba8";
   ctx.lineWidth = 3;
   ctx.strokeRect(ox, oy, boardW, boardH);
@@ -471,14 +514,12 @@ function updateUI() {
   document.getElementById("tkoiScore").textContent =
     state.players[1].score;
 
-  const status = document.getElementById("status");
-
   if (state.game_over) {
-    status.textContent = state.winner === "DRAW"
-      ? "DRAW!"
-      : state.winner + " WINS!";
+    document.getElementById("status").textContent =
+      state.winner === "DRAW" ? "DRAW!" : state.winner + " WINS!";
   } else {
-    status.textContent = running ? "PLAYING" : "PAUSED";
+    document.getElementById("status").textContent =
+      running ? "PLAYING" : "PAUSED";
   }
 }
 
@@ -493,6 +534,75 @@ function setDirection(name) {
   playerDirection = d;
 }
 
+// PlayStation / browser Gamepad API
+function pollGamepad() {
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  let pad = null;
+
+  if (gamepadIndex !== null && pads[gamepadIndex]) {
+    pad = pads[gamepadIndex];
+  } else {
+    for (let i = 0; i < pads.length; i++) {
+      if (pads[i]) {
+        pad = pads[i];
+        gamepadIndex = i;
+        break;
+      }
+    }
+  }
+
+  const indicator = document.getElementById("controllerStatus");
+
+  if (!pad) {
+    gamepadIndex = null;
+    previousButtons = [];
+    indicator.textContent = "🎮 Connect your PlayStation controller";
+    return;
+  }
+
+  indicator.textContent = "🎮 Controller connected: " + pad.id;
+
+  const buttons = pad.buttons || [];
+
+  // X button (Cross) starts or resumes.
+  if (buttons[0] && buttons[0].pressed &&
+      !previousButtons[0]) {
+    if (!running) {
+      if (gameOver) restartGame();
+      startGame();
+    }
+  }
+
+  // Options button pauses or resumes.
+  if (buttons[9] && buttons[9].pressed &&
+      !previousButtons[9]) {
+    if (running) {
+      pauseGame();
+    } else if (!gameOver) {
+      startGame();
+    }
+  }
+
+  previousButtons = buttons.map(b => b.pressed);
+
+  // D-pad controls.
+  if (buttons[12] && buttons[12].pressed) setDirection("up");
+  else if (buttons[13] && buttons[13].pressed) setDirection("down");
+  else if (buttons[14] && buttons[14].pressed) setDirection("left");
+  else if (buttons[15] && buttons[15].pressed) setDirection("right");
+
+  // Left analog stick controls.
+  const x = pad.axes && pad.axes.length > 0 ? pad.axes[0] : 0;
+  const y = pad.axes && pad.axes.length > 1 ? pad.axes[1] : 0;
+  const deadzone = 0.55;
+
+  if (Math.abs(x) > Math.abs(y) && Math.abs(x) > deadzone) {
+    setDirection(x > 0 ? "right" : "left");
+  } else if (Math.abs(y) > deadzone) {
+    setDirection(y > 0 ? "down" : "up");
+  }
+}
+
 function tick() {
   if (!running || gameOver || !pyodide) return;
 
@@ -502,17 +612,13 @@ function tick() {
     );
 
     state = JSON.parse(result);
-
     lastDirection = {...playerDirection};
 
     if (state.game_over) {
       gameOver = true;
       running = false;
       clearInterval(timer);
-      document.getElementById("status").textContent =
-        state.winner === "DRAW"
-          ? "DRAW!"
-          : state.winner + " WINS!";
+
       document.getElementById("startBtn").textContent = "Play Again";
     }
 
@@ -525,12 +631,7 @@ function tick() {
 }
 
 function startGame() {
-  if (!pyodide) return;
-
-  if (gameOver) {
-    restartGame();
-    return;
-  }
+  if (!pyodide || gameOver) return;
 
   running = true;
   document.getElementById("startBtn").textContent = "Playing";
@@ -577,7 +678,7 @@ document.getElementById("startBtn").onclick = startGame;
 document.getElementById("pauseBtn").onclick = pauseGame;
 document.getElementById("restartBtn").onclick = restartGame;
 
-window.addEventListener("keydown", (event) => {
+window.addEventListener("keydown", event => {
   const keys = {
     ArrowUp: "up",
     ArrowDown: "down",
@@ -607,7 +708,26 @@ document.querySelectorAll(".mobile button").forEach(button => {
   });
 });
 
+window.addEventListener("gamepadconnected", event => {
+  gamepadIndex = event.gamepad.index;
+  document.getElementById("controllerStatus").textContent =
+    "🎮 PlayStation controller connected!";
+});
+
+window.addEventListener("gamepaddisconnected", () => {
+  gamepadIndex = null;
+  previousButtons = [];
+  document.getElementById("controllerStatus").textContent =
+    "🎮 Controller disconnected";
+});
+
 window.addEventListener("resize", resize);
+
+// Poll controller continuously.
+function controllerLoop() {
+  pollGamepad();
+  requestAnimationFrame(controllerLoop);
+}
 
 async function initialize() {
   resize();
@@ -622,15 +742,15 @@ async function initialize() {
     document.getElementById("startBtn").disabled = false;
     document.getElementById("pauseBtn").disabled = false;
     document.getElementById("restartBtn").disabled = false;
-
     document.getElementById("startBtn").textContent = "Start Game";
 
     updateUI();
     draw();
+    requestAnimationFrame(controllerLoop);
   } catch (error) {
+    console.error(error);
     document.getElementById("loading").textContent =
       "Could not load game. Please refresh the page.";
-    console.error(error);
   }
 }
 
