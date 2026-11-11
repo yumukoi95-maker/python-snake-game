@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python Snake Game</title>
+<script src="https://cdn.jsdelivr.net/pyodide/v314.0.7/full/pyodide.js"></script>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  background: #101827;
+  color: white;
+  font-family: Arial, sans-serif;
+  text-align: center;
+  padding: 20px;
+}
+
+h1 { color: #4ade80; }
+
+canvas {
+  width: min(90vw, 400px);
+  height: min(90vw, 400px);
+  background: #07111f;
+  border: 3px solid #4ade80;
+  border-radius: 10px;
+}
+
+button {
+  background: #22c55e;
+  color: #07111f;
+  border: 0;
+  padding: 12px 20px;
+  margin: 5px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.controls {
+  margin-top: 15px;
+}
+
+#status { color: #facc15; }
+</style>
+</head>
+
+<body>
+
+<h1>🐍 PYTHON SNAKE</h1>
+<h2>Score: <span id="score">0</span></h2>
+
+<canvas id="game" width="400" height="400"></canvas>
+
+<p id="status">Loading Python...</p>
+
+<button id="start" disabled>START / RESTART</button>
+
+<div class="controls">
+  <div><button data-dir="UP">⬆️</button></div>
+  <div>
+    <button data-dir="LEFT">⬅️</button>
+    <button data-dir="DOWN">⬇️</button>
+    <button data-dir="RIGHT">➡️</button>
+  </div>
+</div>
+
+<p>Use your keyboard arrow keys or the buttons!</p>
+
+<script>
+const pythonCode = `
+import random
+import json
+
+WIDTH = 20
+HEIGHT = 20
+
+def reset_game():
+    global snake, direction, next_direction
+    global food, score, game_over
+
+    snake = [(10, 10), (9, 10), (8, 10)]
+    direction = (1, 0)
+    next_direction = (1, 0)
+    food = (15, 10)
+    score = 0
+    game_over = False
+
+def set_direction(name):
+    global next_direction
+
+    directions = {
+        "UP": (0, -1),
+        "DOWN": (0, 1),
+        "LEFT": (-1, 0),
+        "RIGHT": (1, 0)
+    }
+
+    new_direction = directions.get(name)
+
+    if new_direction and new_direction != (
+        -direction[0], -direction[1]
+    ):
+        next_direction = new_direction
+
+def get_state():
+    return json.dumps({
+        "snake": snake,
+        "food": food,
+        "score": score,
+        "game_over": game_over
+    })
+
+def step():
+    global snake, direction, food, score, game_over
+
+    if game_over:
+        return get_state()
+
+    direction = next_direction
+
+    head = (
+        snake[0][0] + direction[0],
+        snake[0][1] + direction[1]
+    )
+
+    eating = head == food
+    body = snake if eating else snake[:-1]
+
+    if (
+        head[0] < 0 or head[0] >= WIDTH
+        or head[1] < 0 or head[1] >= HEIGHT
+        or head in body
+    ):
+        game_over = True
+        return get_state()
+
+    snake.insert(0, head)
+
+    if eating:
+        score += 1
+        empty = [
+            (x, y)
+            for x in range(WIDTH)
+            for y in range(HEIGHT)
+            if (x, y) not in snake
+        ]
+
+        if empty:
+            food = random.choice(empty)
+        else:
+            game_over = True
+    else:
+        snake.pop()
+
+    return get_state()
+
+reset_game()
+`;
+
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const scoreElement = document.getElementById("score");
+const statusElement = document.getElementById("status");
+const startButton = document.getElementById("start");
+
+let pyodide;
+let timer = null;
+
+function getState() {
+    return JSON.parse(pyodide.runPython("get_state()"));
+}
+
+function draw(state) {
+    const size = 20;
+
+    ctx.clearRect(0, 0, 400, 400);
+
+    // Food
+    ctx.fillStyle = "#ef4444";
+    ctx.fillRect(
+        state.food[0] * size + 2,
+        state.food[1] * size + 2,
+        16, 16
+    );
+
+    // Snake
+    state.snake.forEach(([x, y], index) => {
+        ctx.fillStyle = index === 0 ? "#86efac" : "#22c55e";
+        ctx.fillRect(x * size + 1, y * size + 1, 18, 18);
+    });
+
+    scoreElement.textContent = state.score;
+}
+
+function tick() {
+    const state = JSON.parse(pyodide.runPython("step()"));
+    draw(state);
+
+    if (state.game_over) {
+        clearInterval(timer);
+        timer = null;
+        statusElement.textContent = "GAME OVER! Press restart!";
+    }
+}
+
+function startGame() {
+    if (!pyodide) return;
+
+    clearInterval(timer);
+    pyodide.runPython("reset_game()");
+
+    draw(getState());
+    statusElement.textContent = "Playing! Good luck!";
+    timer = setInterval(tick, 130);
+}
+
+function changeDirection(name) {
+    if (!pyodide) return;
+
+    pyodide.globals.set("requested_direction", name);
+    pyodide.runPython(
+        "set_direction(requested_direction)"
+    );
+}
+
+document.addEventListener("keydown", (event) => {
+    const keys = {
+        ArrowUp: "UP",
+        ArrowDown: "DOWN",
+        ArrowLeft: "LEFT",
+        ArrowRight: "RIGHT"
+    };
+
+    if (keys[event.key]) {
+        event.preventDefault();
+        changeDirection(keys[event.key]);
+    }
+});
+
+document.querySelectorAll("[data-dir]").forEach(button => {
+    button.addEventListener("click", () => {
+        changeDirection(button.dataset.dir);
+    });
+});
+
+startButton.addEventListener("click", startGame);
+
+async function initialize() {
+    try {
+        pyodide = await loadPyodide();
+        pyodide.runPython(pythonCode);
+
+        draw(getState());
+
+        statusElement.textContent = "Python loaded! Ready to play!";
+        startButton.disabled = false;
+    } catch (error) {
+        statusElement.textContent = "Loading error: " + error;
+    }
+}
+
+initialize();
+</script>
+
+</body>
+</html>
