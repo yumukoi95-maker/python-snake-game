@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Elemtary VS T.Koi</title>
+<title>ELEMENTARY VS T.KOI</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <style>
 * { box-sizing: border-box; }
@@ -118,11 +118,11 @@ button:disabled { opacity: .5; }
 </head>
 <body>
 
-<div id="loading">🐍 Loading Elementary vs T.Koi...</div>
+<div id="loading">🐍 Loading ELEMENTARY vs T.Koi...</div>
 <canvas id="canvas"></canvas>
 
 <div class="top">
-  <div class="panel green">Elementary: <span id="YayoiScore">0</span></div>
+  <div class="panel green">ELEMENTARY: <span id="elementaryScore">0</span></div>
   <div class="panel blue">T.KOI: <span id="tkoiScore">0</span></div>
   <div class="panel" id="status">READY</div>
 </div>
@@ -153,12 +153,12 @@ let running = false;
 let gameOver = false;
 let timer = null;
 let state = null;
-
 let playerDirection = {x: 1, y: 0};
 let lastDirection = {x: 1, y: 0};
 
 let gamepadIndex = null;
 let previousButtons = [];
+let turnCount = 0;
 
 const directions = {
   up: {x: 0, y: -1},
@@ -202,7 +202,7 @@ def reset_game():
 
     players = [
         {
-            "name": "Elementary",
+            "name": "ELEMENTARY",
             "body": [(8, 13), (7, 13), (6, 13)],
             "direction": (1, 0),
             "score": 0
@@ -236,12 +236,8 @@ def safe_direction(p, direction):
 def tkoi_ai():
     p = players[1]
 
-    if apple is None:
-        return p["direction"]
-
-    hx, hy = p["body"][0]
-    ax, ay = apple
     current = p["direction"]
+    hx, hy = p["body"][0]
 
     options = [(1,0),(-1,0),(0,1),(0,-1)]
 
@@ -255,9 +251,19 @@ def tkoi_ai():
     if not safe:
         return current
 
+    # Sometimes choose a random safe direction.
+    # This makes T.Koi less predictable and easier to beat.
+    if random.random() < 0.40:
+        return random.choice(safe)
+
+    if apple is None:
+        return random.choice(safe)
+
+    ax, ay = apple
+
     safe.sort(
         key=lambda d:
-        abs(hx+d[0]-ax) + abs(hy+d[1]-ay) + random.random()*0.3
+        abs(hx+d[0]-ax) + abs(hy+d[1]-ay) + random.random()*0.5
     )
 
     return safe[0]
@@ -278,7 +284,7 @@ def get_state():
         "message": message
     })
 
-def step(dx, dy):
+def step(dx, dy, move_tkoi=True):
     global players, apple, game_over, winner, message
 
     if game_over:
@@ -289,13 +295,21 @@ def step(dx, dy):
     if not (dx == -current[0] and dy == -current[1]):
         players[0]["direction"] = (dx, dy)
 
-    players[1]["direction"] = tkoi_ai()
+    # T.Koi only moves when the JavaScript game allows it.
+    if move_tkoi:
+        players[1]["direction"] = tkoi_ai()
 
     new_bodies = []
     died = [False, False]
     ate = [False, False]
 
     for i, p in enumerate(players):
+
+        # T.Koi waits during the two turns between its moves.
+        if i == 1 and not move_tkoi:
+            new_bodies.append(list(p["body"]))
+            continue
+
         hx, hy = p["body"][0]
         vx, vy = p["direction"]
 
@@ -314,8 +328,8 @@ def step(dx, dy):
         if not ate[i]:
             new_body.pop()
 
-        # Only collision with its OWN body causes death.
-        # Touching or crossing the other snake is safe.
+        # Only hitting its own body causes death.
+        # Touching the other snake is safe.
         if new_head in new_body[1:]:
             died[i] = True
 
@@ -332,9 +346,9 @@ def step(dx, dy):
             message = "Both snakes crashed!"
         elif died[0]:
             winner = "T.Koi"
-            message = "Player crashed!"
+            message = "ELEMENTARY crashed!"
         else:
-            winner = "Player"
+            winner = "ELEMENTARY"
             message = "T.Koi crashed!"
 
         return get_state()
@@ -421,7 +435,7 @@ function draw() {
     );
   }
 
-  // Draw snake bodies
+  // Snake bodies
   state.players.forEach((p, index) => {
     const color = index === 0 ? "#42ed83" : "#46a9ff";
     const dark = index === 0 ? "#168f50" : "#1769b6";
@@ -454,7 +468,7 @@ function draw() {
     });
   });
 
-  // Character names above each snake's head
+  // Names above the snake heads
   state.players.forEach((p, index) => {
     const [x, y] = p.body[0];
     const color = index === 0 ? "#42ed83" : "#46a9ff";
@@ -470,15 +484,11 @@ function draw() {
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
 
-    const textWidth = ctx.measureText(label).width;
-    const boxWidth = textWidth + 12;
+    const boxWidth = ctx.measureText(label).width + 12;
     const boxHeight = fontSize + 7;
 
     let labelY = headY - boxHeight - 3;
-
-    if (labelY < 2) {
-      labelY = headY + cell + 3;
-    }
+    if (labelY < 2) labelY = headY + cell + 3;
 
     ctx.fillStyle = "#07111f";
     ctx.strokeStyle = color;
@@ -508,19 +518,16 @@ function draw() {
 function updateUI() {
   if (!state) return;
 
-  document.getElementById("YayoiScore").textContent =
+  document.getElementById("elementaryScore").textContent =
     state.players[0].score;
 
   document.getElementById("tkoiScore").textContent =
     state.players[1].score;
 
-  if (state.game_over) {
-    document.getElementById("status").textContent =
-      state.winner === "DRAW" ? "DRAW!" : state.winner + " WINS!";
-  } else {
-    document.getElementById("status").textContent =
-      running ? "PLAYING" : "PAUSED";
-  }
+  document.getElementById("status").textContent =
+    state.game_over
+      ? (state.winner === "DRAW" ? "DRAW!" : state.winner + " WINS!")
+      : (running ? "PLAYING" : "PAUSED");
 }
 
 function setDirection(name) {
@@ -534,7 +541,6 @@ function setDirection(name) {
   playerDirection = d;
 }
 
-// PlayStation / browser Gamepad API
 function pollGamepad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   let pad = null;
@@ -564,34 +570,27 @@ function pollGamepad() {
 
   const buttons = pad.buttons || [];
 
-  // X button (Cross) starts or resumes.
-  if (buttons[0] && buttons[0].pressed &&
-      !previousButtons[0]) {
+  // Cross / X starts or resumes
+  if (buttons[0] && buttons[0].pressed && !previousButtons[0]) {
     if (!running) {
       if (gameOver) restartGame();
       startGame();
     }
   }
 
-  // Options button pauses or resumes.
-  if (buttons[9] && buttons[9].pressed &&
-      !previousButtons[9]) {
-    if (running) {
-      pauseGame();
-    } else if (!gameOver) {
-      startGame();
-    }
+  // Options pauses or resumes
+  if (buttons[9] && buttons[9].pressed && !previousButtons[9]) {
+    if (running) pauseGame();
+    else if (!gameOver) startGame();
   }
 
   previousButtons = buttons.map(b => b.pressed);
 
-  // D-pad controls.
   if (buttons[12] && buttons[12].pressed) setDirection("up");
   else if (buttons[13] && buttons[13].pressed) setDirection("down");
   else if (buttons[14] && buttons[14].pressed) setDirection("left");
   else if (buttons[15] && buttons[15].pressed) setDirection("right");
 
-  // Left analog stick controls.
   const x = pad.axes && pad.axes.length > 0 ? pad.axes[0] : 0;
   const y = pad.axes && pad.axes.length > 1 ? pad.axes[1] : 0;
   const deadzone = 0.55;
@@ -607,8 +606,13 @@ function tick() {
   if (!running || gameOver || !pyodide) return;
 
   try {
+    turnCount++;
+
+    // T.Koi moves only once every three game ticks.
+    const moveTKoi = turnCount % 3 === 0;
+
     const result = pyodide.runPython(
-      `step(${playerDirection.x}, ${playerDirection.y})`
+      `step(${playerDirection.x}, ${playerDirection.y}, ${moveTKoi ? "True" : "False"})`
     );
 
     state = JSON.parse(result);
@@ -618,7 +622,6 @@ function tick() {
       gameOver = true;
       running = false;
       clearInterval(timer);
-
       document.getElementById("startBtn").textContent = "Play Again";
     }
 
@@ -649,7 +652,6 @@ function pauseGame() {
 
   running = false;
   clearInterval(timer);
-
   document.getElementById("startBtn").textContent = "Resume";
   document.getElementById("status").textContent = "PAUSED";
 }
@@ -659,6 +661,7 @@ function restartGame() {
 
   running = false;
   gameOver = false;
+  turnCount = 0;
   clearInterval(timer);
 
   pyodide.runPython("reset_game()");
@@ -723,7 +726,6 @@ window.addEventListener("gamepaddisconnected", () => {
 
 window.addEventListener("resize", resize);
 
-// Poll controller continuously.
 function controllerLoop() {
   pollGamepad();
   requestAnimationFrame(controllerLoop);
