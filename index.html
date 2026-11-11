@@ -3,39 +3,154 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>KOI SNAKE - Free Roam</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOI SNAKE</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
+
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#07111e;color:white;font-family:Arial,sans-serif;overflow:hidden}
-canvas{display:block;width:100vw;height:100vh;background:#07111e}
-#title{position:fixed;z-index:5;top:8px;left:50%;transform:translateX(-50%);color:#4ade80;font-size:26px;font-weight:bold;text-shadow:0 0 15px #16a34a;pointer-events:none}
-#status{position:fixed;z-index:5;top:45px;left:50%;transform:translateX(-50%);background:#101f30dd;padding:7px 12px;border-radius:8px;color:#facc15;font-size:13px;pointer-events:none}
-.panel{position:fixed;z-index:4;background:#102137dd;backdrop-filter:blur(6px);border:1px solid #334155;border-radius:10px;padding:10px}
-#scores{top:85px;left:10px;width:190px;max-height:43vh;overflow:auto}
-#scores h3,#board h3{margin:2px 0 10px;color:#4ade80}
-#stats{display:grid;grid-template-columns:repeat(2,1fr);gap:5px}
-.stat{padding:6px 4px;background:#07111e;border-radius:5px;font-size:11px}
-.stat b{display:block;margin-top:3px;font-size:13px}
-#board{bottom:10px;left:10px;width:190px;max-height:35vh;overflow:auto}
-.rank{display:flex;justify-content:space-between;padding:5px;margin:3px 0;background:#07111e;border-radius:5px;font-size:12px}
-button{border:0;border-radius:8px;padding:11px 15px;background:#22c55e;color:#07111e;font-weight:bold;cursor:pointer}
-#start,#pause{position:fixed;z-index:6;right:12px;top:85px}
-#pause{top:132px;background:#334155;color:white}
-.controls{position:fixed;z-index:6;right:12px;bottom:12px;text-align:center}
-.controls button{min-width:49px;font-size:19px;margin:3px}
-#help{position:fixed;bottom:10px;left:220px;color:#94a3b8;font-size:11px}
+body{
+ margin:0;
+ overflow:hidden;
+ background:#07111e;
+ color:white;
+ font-family:Arial,sans-serif;
+}
+canvas{
+ position:fixed;
+ inset:0;
+ width:100%;
+ height:100%;
+ display:block;
+}
+#title{
+ position:fixed;
+ top:8px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:5;
+ color:#4ade80;
+ font-size:26px;
+ font-weight:bold;
+ text-shadow:0 0 15px #16a34a;
+ pointer-events:none;
+}
+#status{
+ position:fixed;
+ top:43px;
+ left:50%;
+ transform:translateX(-50%);
+ z-index:5;
+ color:#facc15;
+ background:#101f30dd;
+ padding:7px 12px;
+ border-radius:8px;
+ font-size:13px;
+ pointer-events:none;
+}
+.panel{
+ position:fixed;
+ z-index:5;
+ background:#102137e8;
+ border:1px solid #334155;
+ border-radius:10px;
+ padding:10px;
+}
+#scores{
+ top:85px;
+ left:10px;
+ width:190px;
+ max-height:43vh;
+ overflow:auto;
+}
+#board{
+ bottom:10px;
+ left:10px;
+ width:190px;
+ max-height:35vh;
+ overflow:auto;
+}
+.panel h3{
+ margin:2px 0 10px;
+ color:#4ade80;
+ font-size:15px;
+}
+#stats{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:5px;
+}
+.stat{
+ padding:6px 4px;
+ background:#07111e;
+ border-radius:5px;
+ font-size:11px;
+}
+.stat b{
+ display:block;
+ margin-top:3px;
+ font-size:13px;
+}
+.rank{
+ display:flex;
+ justify-content:space-between;
+ padding:5px;
+ margin:3px 0;
+ background:#07111e;
+ border-radius:5px;
+ font-size:12px;
+}
+button{
+ border:0;
+ border-radius:8px;
+ padding:11px 15px;
+ background:#22c55e;
+ color:#07111e;
+ font-weight:bold;
+ cursor:pointer;
+}
+button:disabled{opacity:.5}
+#start,#pause{
+ position:fixed;
+ z-index:7;
+ right:12px;
+ top:85px;
+}
+#pause{
+ top:132px;
+ background:#334155;
+ color:white;
+}
+.controls{
+ position:fixed;
+ z-index:7;
+ right:12px;
+ bottom:12px;
+ text-align:center;
+}
+.controls button{
+ min-width:48px;
+ margin:3px;
+ font-size:18px;
+}
+#help{
+ position:fixed;
+ bottom:10px;
+ left:220px;
+ z-index:5;
+ color:#cbd5e1;
+ font-size:11px;
+}
 @media(max-width:600px){
- #scores{width:130px;top:75px}
- #board{width:130px;bottom:5px}
- #help{display:none}
+ #scores,#board{width:130px}
  #title{font-size:21px}
- #status{top:40px;font-size:11px}
- .controls button{min-width:40px;padding:9px}
+ #status{font-size:10px}
+ .controls button{min-width:39px;padding:9px}
+ #help{display:none}
 }
 </style>
 </head>
+
 <body>
 
 <div id="title">🐍 KOI SNAKE</div>
@@ -44,45 +159,50 @@ button{border:0;border-radius:8px;padding:11px 15px;background:#22c55e;color:#07
 <canvas id="game"></canvas>
 
 <div class="panel" id="scores">
-<h3>🐍 SNAKE SCORES</h3>
-<div id="stats"></div>
+ <h3>🐍 SNAKE SCORES</h3>
+ <div id="stats"></div>
 </div>
 
 <div class="panel" id="board">
-<h3>🏆 LEADERBOARD</h3>
-<div id="leaderboard"></div>
+ <h3>🏆 CHAMPIONSHIP</h3>
+ <div id="leaderboard"></div>
 </div>
 
 <button id="start" disabled>START</button>
 <button id="pause" disabled>PAUSE</button>
 
 <div class="controls">
-<div><button data-dir="UP">⬆️</button></div>
-<div>
-<button data-dir="LEFT">⬅️</button>
-<button data-dir="DOWN">⬇️</button>
-<button data-dir="RIGHT">➡️</button>
-</div>
+ <div><button data-dir="UP">⬆️</button></div>
+ <div>
+  <button data-dir="LEFT">⬅️</button>
+  <button data-dir="DOWN">⬇️</button>
+  <button data-dir="RIGHT">➡️</button>
+ </div>
 </div>
 
-<div id="help">Arrow keys to move Koi • Collect apples • Touching snakes is safe!</div>
+<div id="help">Arrow keys / WASD to move Koi • Eat apples • No snake deaths!</div>
 
 <script>
-const W=60,H=36,CELL=20;
+const W=60;
+const H=36;
+const CELL=20;
+
 const NAMES=[
-"Koi","Sowa","Kyoma","Fumio","Sora","Yayoi","Matoi",
-"Mahiro","T.Thomas","T.Anna","T.Mitchelle","T.Kato",
-"YUzuki.K","Honoka","Anne","Yuika","Aisei","Babubabu"
+ "Koi","Sowa","Kyoma","Fumio","Sora","Yayoi","Matoi",
+ "Mahiro","T.Thomas","T.Anna","T.Mitchelle","T.Kato",
+ "YUzuki.K","Honoka","Anne","Yuika","Aisei","Babubabu"
 ];
 
 const COLORS=[
-"#4ade80","#60a5fa","#c084fc","#fb923c","#22d3ee",
-"#f472b6","#facc15","#ef4444","#a3e635","#e879f9",
-"#38bdf8","#f97316","#2dd4bf","#fb7185","#818cf8",
-"#d946ef","#bef264","#f5f5f4"
+ "#4ade80","#60a5fa","#c084fc","#fb923c","#22d3ee",
+ "#f472b6","#facc15","#ef4444","#a3e635","#e879f9",
+ "#38bdf8","#f97316","#2dd4bf","#fb7185","#818cf8",
+ "#d946ef","#bef264","#f5f5f4"
 ];
 
-const colorMap=Object.fromEntries(NAMES.map((n,i)=>[n,COLORS[i]]));
+const colorMap=Object.fromEntries(
+ NAMES.map((name,i)=>[name,COLORS[i]])
+);
 
 const pythonCode=`
 import random,json
@@ -96,50 +216,51 @@ NAMES=[
 "YUzuki.K","Honoka","Anne","Yuika","Aisei","Babubabu"
 ]
 
-def make_snake(name,body,direction):
+players=[]
+food=None
+tick_count=0
+
+def make_snake(name,x,y,d):
     return {
         "name":name,
-        "body":body,
-        "direction":direction,
-        "next":direction,
+        "body":[
+            (x,y),
+            ((x-d[0])%W,(y-d[1])%H),
+            ((x-2*d[0])%W,(y-2*d[1])%H)
+        ],
+        "direction":d,
+        "next":d,
         "score":0
     }
 
 def reset_game():
-    global players,food,tick_count
-
+    global players,tick_count
     players=[]
+    tick_count=0
+
     for i,name in enumerate(NAMES):
         col=i%6
         row=i//6
-        x=4+col*10
-        y=5+row*12
+        x=5+col*10
+        y=5+row*10
+        d=(1,0) if i%2==0 else (-1,0)
+        players.append(make_snake(name,x,y,d))
 
-        d=(1,0) if col%2==0 else (-1,0)
-        head=(x+2,y)
-
-        body=[
-            head,
-            (head[0]-d[0],y),
-            (head[0]-2*d[0],y)
-        ]
-
-        players.append(make_snake(name,body,d))
-
-    tick_count=0
     spawn_food()
+    return get_state()
 
 def occupied_cells():
-    cells=set()
+    result=set()
     for p in players:
-        cells.update(p["body"])
-    return cells
+        result.update(p["body"])
+    return result
 
 def spawn_food():
     global food
     occupied=occupied_cells()
     empty=[
-        (x,y) for x in range(W)
+        (x,y)
+        for x in range(W)
         for y in range(H)
         if (x,y) not in occupied
     ]
@@ -153,47 +274,54 @@ def change_direction(name):
         "RIGHT":(1,0)
     }
     d=directions.get(name)
-    current=players[0]["direction"]
-    if d and d!=(-current[0],-current[1]):
-        players[0]["next"]=d
+    if d:
+        current=players[0]["direction"]
+        if d!=(-current[0],-current[1]):
+            players[0]["next"]=d
 
 def rival_direction(p):
     current=p["direction"]
-    directions=[(1,0),(-1,0),(0,1),(0,-1)]
-    candidates=[
-        d for d in directions
+    options=[
+        (1,0),(-1,0),(0,1),(0,-1)
+    ]
+    options=[
+        d for d in options
         if d!=(-current[0],-current[1])
     ]
 
+    random.shuffle(options)
     head=p["body"][0]
-    random.shuffle(candidates)
 
     if food:
-        candidates.sort(
+        options.sort(
             key=lambda d:
             abs((head[0]+d[0])%W-food[0])
             +abs((head[1]+d[1])%H-food[1])
         )
 
-    return candidates[0]
+    return options[0]
 
 def step():
-    global food,tick_count
+    global tick_count
 
     tick_count+=1
     ate=False
 
     for i,p in enumerate(players):
-        d=p["next"] if i==0 else rival_direction(p)
-        p["direction"]=d
+        if i==0:
+            d=p["next"]
+        else:
+            d=rival_direction(p)
 
+        p["direction"]=d
         head=p["body"][0]
+
         new_head=(
             (head[0]+d[0])%W,
             (head[1]+d[1])%H
         )
 
-        # Snakes can overlap without collision or elimination.
+        # No collision checks: all snakes remain alive.
         p["body"].insert(0,new_head)
 
         if new_head==food:
@@ -214,7 +342,8 @@ def get_state():
                 "name":p["name"],
                 "body":p["body"],
                 "score":p["score"]
-            } for p in players
+            }
+            for p in players
         ],
         "food":food,
         "ticks":tick_count
@@ -226,27 +355,16 @@ reset_game()
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
 const statusEl=document.getElementById("status");
+const stats=document.getElementById("stats");
+const leaderboard=document.getElementById("leaderboard");
 const startBtn=document.getElementById("start");
 const pauseBtn=document.getElementById("pause");
 
-let pyodide=null,timer=null,paused=false;
-let cameraX=0,cameraY=0;
-let latestState=null;
-
-const stats=document.getElementById("stats");
-const leaderboard=document.getElementById("leaderboard");
-
-NAMES.forEach((name,i)=>{
- const div=document.createElement("div");
- div.className="stat";
- div.style.color=COLORS[i];
- div.textContent=name;
- const b=document.createElement("b");
- b.id="score-"+i;
- b.textContent="0";
- div.appendChild(b);
- stats.appendChild(div);
-});
+let pyodide=null;
+let timer=null;
+let paused=false;
+let cameraX=0;
+let cameraY=0;
 
 function resize(){
  const dpr=Math.min(window.devicePixelRatio||1,2);
@@ -257,49 +375,78 @@ function resize(){
 window.addEventListener("resize",resize);
 resize();
 
+// Build scoreboard
+NAMES.forEach((name,i)=>{
+ const div=document.createElement("div");
+ div.className="stat";
+ div.style.color=COLORS[i];
+ div.textContent=name;
+
+ const score=document.createElement("b");
+ score.id="score-"+i;
+ score.textContent="0";
+
+ div.appendChild(score);
+ stats.appendChild(div);
+});
+
 function getState(){
  return JSON.parse(pyodide.runPython("get_state()"));
 }
 
 function draw(s){
- latestState=s;
-
  const vw=innerWidth;
  const vh=innerHeight;
 
- const scale=Math.min(vw/W,vh/H);
- const visibleW=vw/scale;
- const visibleH=vh/scale;
+ // Correct camera scale: pixel dimensions are used here.
+ const scale=Math.min(
+  vw/(W*CELL),
+  vh/(H*CELL)
+ );
+
+ const visibleW=vw/(scale*CELL);
+ const visibleH=vh/(scale*CELL);
 
  const koi=s.players[0].body[0];
 
- cameraX=Math.max(0,Math.min(W-visibleW,koi[0]-visibleW/2));
- cameraY=Math.max(0,Math.min(H-visibleH,koi[1]-visibleH/2));
+ cameraX=Math.max(
+  0,
+  Math.min(W-visibleW,koi[0]-visibleW/2)
+ );
 
- // Center small leftover view when viewport is larger than world.
- const offsetX=Math.max(0,(vw-visibleW*scale)/2);
- const offsetY=Math.max(0,(vh-visibleH*scale)/2);
+ cameraY=Math.max(
+  0,
+  Math.min(H-visibleH,koi[1]-visibleH/2)
+ );
+
+ const offsetX=(vw-visibleW*CELL*scale)/2;
+ const offsetY=(vh-visibleH*CELL*scale)/2;
 
  ctx.fillStyle="#07111e";
  ctx.fillRect(0,0,vw,vh);
 
  ctx.save();
- ctx.translate(offsetX-cameraX*scale,offsetY-cameraY*scale);
+ ctx.translate(
+  offsetX-cameraX*CELL*scale,
+  offsetY-cameraY*CELL*scale
+ );
  ctx.scale(scale,scale);
 
- // Large arena background
+ // Arena
  ctx.fillStyle="#0b1928";
  ctx.fillRect(0,0,W*CELL,H*CELL);
 
  // Grid
- ctx.strokeStyle="#172d40";
+ ctx.strokeStyle="#244057";
  ctx.lineWidth=1;
+
  for(let x=0;x<=W;x++){
   ctx.beginPath();
   ctx.moveTo(x*CELL,0);
   ctx.lineTo(x*CELL,H*CELL);
   ctx.stroke();
  }
+
  for(let y=0;y<=H;y++){
   ctx.beginPath();
   ctx.moveTo(0,y*CELL);
@@ -307,9 +454,9 @@ function draw(s){
   ctx.stroke();
  }
 
- // Arena border
+ // Border
  ctx.strokeStyle="#4ade80";
- ctx.lineWidth=5;
+ ctx.lineWidth=4;
  ctx.strokeRect(0,0,W*CELL,H*CELL);
 
  // Apple
@@ -317,23 +464,33 @@ function draw(s){
   const [x,y]=s.food;
   ctx.fillStyle="#ef4444";
   ctx.beginPath();
-  ctx.arc(x*CELL+10,y*CELL+11,7,0,Math.PI*2);
+  ctx.arc(x*CELL+10,y*CELL+11,8,0,Math.PI*2);
   ctx.fill();
+
   ctx.fillStyle="#4ade80";
-  ctx.fillRect(x*CELL+11,y*CELL+1,3,6);
+  ctx.fillRect(x*CELL+10,y*CELL+1,3,6);
  }
 
- // Snakes
+ // Draw every snake, including its head and name
  for(const p of s.players){
   const color=colorMap[p.name];
 
-  p.body.forEach(([x,y],i)=>{
+  for(let i=p.body.length-1;i>=0;i--){
+   const [x,y]=p.body[i];
+
+   ctx.globalAlpha=i===0?1:0.85;
    ctx.fillStyle=color;
-   ctx.globalAlpha=i===0?1:0.8;
    ctx.beginPath();
-   ctx.roundRect(x*CELL+1,y*CELL+1,18,18,5);
+   ctx.roundRect(
+    x*CELL+1,
+    y*CELL+1,
+    18,
+    18,
+    5
+   );
    ctx.fill();
-  });
+  }
+
   ctx.globalAlpha=1;
 
   const [hx,hy]=p.body[0];
@@ -346,15 +503,22 @@ function draw(s){
   ctx.fill();
 
   // Name label
-  ctx.font="bold 10px Arial";
+  ctx.font="bold 11px Arial";
   ctx.textAlign="center";
-  const width=ctx.measureText(p.name).width+8;
-  const ly=hy*CELL-4;
+
+  const labelWidth=ctx.measureText(p.name).width+8;
+  const labelX=hx*CELL+10;
 
   ctx.fillStyle="#020817";
-  ctx.fillRect(hx*CELL+10-width/2,ly-10,width,13);
+  ctx.fillRect(
+   labelX-labelWidth/2,
+   hy*CELL-15,
+   labelWidth,
+   13
+  );
+
   ctx.fillStyle=color;
-  ctx.fillText(p.name,hx*CELL+10,ly);
+  ctx.fillText(p.name,labelX,hy*CELL-5);
  }
 
  ctx.restore();
@@ -365,36 +529,51 @@ function draw(s){
  });
 
  // Leaderboard
- const sorted=[...s.players].sort((a,b)=>b.score-a.score);
+ const sorted=[...s.players].sort(
+  (a,b)=>b.score-a.score
+ );
+
  leaderboard.replaceChildren();
 
  sorted.forEach((p,i)=>{
   const row=document.createElement("div");
   row.className="rank";
-  const n=document.createElement("span");
-  n.textContent=(i+1)+". "+p.name;
-  n.style.color=colorMap[p.name];
+
+  const name=document.createElement("span");
+  name.textContent=(i+1)+". "+p.name;
+  name.style.color=colorMap[p.name];
+
   const score=document.createElement("b");
   score.textContent=p.score;
-  row.append(n,score);
+
+  row.append(name,score);
   leaderboard.appendChild(row);
  });
 }
 
 function tick(){
- const s=JSON.parse(pyodide.runPython("step()"));
- draw(s);
+ try{
+  const s=JSON.parse(pyodide.runPython("step()"));
+  draw(s);
+ }catch(e){
+  clearInterval(timer);
+  timer=null;
+  statusEl.textContent="Game error: "+e.message;
+  console.error(e);
+ }
 }
 
 function startGame(){
  if(!pyodide)return;
+
  clearInterval(timer);
  pyodide.runPython("reset_game()");
  paused=false;
  pauseBtn.textContent="PAUSE";
+
  draw(getState());
- statusEl.textContent="APPLE HUNT! ALL SNAKES ARE SAFE!";
- timer=setInterval(tick,130);
+ statusEl.textContent="18 SNAKES READY! COLLECT APPLES!";
+ timer=setInterval(tick,150);
 }
 
 function changeDirection(dir){
@@ -405,10 +584,16 @@ function changeDirection(dir){
 
 document.addEventListener("keydown",e=>{
  const keys={
-  ArrowUp:"UP",ArrowDown:"DOWN",
-  ArrowLeft:"LEFT",ArrowRight:"RIGHT",
-  w:"UP",s:"DOWN",a:"LEFT",d:"RIGHT"
+  ArrowUp:"UP",
+  ArrowDown:"DOWN",
+  ArrowLeft:"LEFT",
+  ArrowRight:"RIGHT",
+  w:"UP",W:"UP",
+  s:"DOWN",S:"DOWN",
+  a:"LEFT",A:"LEFT",
+  d:"RIGHT",D:"RIGHT"
  };
+
  if(keys[e.key]){
   e.preventDefault();
   changeDirection(keys[e.key]);
@@ -416,16 +601,18 @@ document.addEventListener("keydown",e=>{
 });
 
 document.querySelectorAll("[data-dir]").forEach(btn=>{
- btn.addEventListener("click",()=>changeDirection(btn.dataset.dir));
+ btn.addEventListener("click",()=>{
+  changeDirection(btn.dataset.dir);
+ });
 });
 
 startBtn.addEventListener("click",startGame);
 
 pauseBtn.addEventListener("click",()=>{
- if(!timer&&!paused)return;
+ if(!pyodide)return;
 
  if(paused){
-  timer=setInterval(tick,130);
+  timer=setInterval(tick,150);
   paused=false;
   pauseBtn.textContent="PAUSE";
   statusEl.textContent="GAME RESUMED!";
@@ -440,15 +627,19 @@ pauseBtn.addEventListener("click",()=>{
 
 async function initialize(){
  try{
-  statusEl.textContent="Loading Python...";
+  statusEl.textContent="Loading Python engine...";
+
   pyodide=await loadPyodide();
   pyodide.runPython(pythonCode);
+
   draw(getState());
+
   startBtn.disabled=false;
   pauseBtn.disabled=false;
+
   statusEl.textContent="18 SNAKES READY! PRESS START!";
  }catch(e){
-  statusEl.textContent="ERROR: "+e.message;
+  statusEl.textContent="Loading failed: "+e.message;
   console.error(e);
  }
 }
