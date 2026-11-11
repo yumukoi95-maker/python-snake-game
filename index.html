@@ -3,447 +3,635 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>YUika VS T.Koi - Snake Duel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YUika VS T.Koi - Snake Game</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;background:#07111e;color:white;font-family:Arial,sans-serif;overflow:hidden}
-canvas{position:fixed;inset:0;width:100%;height:100%}
-#title{position:fixed;z-index:3;top:12px;left:50%;transform:translateX(-50%);font-size:28px;font-weight:bold;color:#4ade80;text-shadow:0 0 15px #16a34a}
-#status{position:fixed;z-index:3;top:52px;left:50%;transform:translateX(-50%);background:#102137dd;padding:8px 14px;border-radius:8px;color:#facc15;font-size:13px;white-space:nowrap}
-#scores{position:fixed;z-index:3;top:95px;left:12px;background:#102137e8;padding:12px;border:1px solid #334155;border-radius:10px}
-.score{margin:8px 0;font-weight:bold}
-#buttons{position:fixed;z-index:4;top:95px;right:12px;display:flex;gap:8px}
-button{border:0;border-radius:8px;padding:12px 16px;background:#22c55e;color:#07111e;font-weight:bold;cursor:pointer}
-#pause{background:#334155;color:white}
-.controls{position:fixed;z-index:4;right:15px;bottom:15px;text-align:center}
-.controls button{min-width:48px;margin:3px;font-size:18px}
-#help{position:fixed;z-index:3;bottom:15px;left:15px;color:#cbd5e1;font-size:12px}
-@media(max-width:600px){
- #title{font-size:22px}
- #scores{top:95px;font-size:13px}
- #help{max-width:150px;line-height:1.5}
- .controls button{min-width:40px;padding:9px}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #07111f;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+#game {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.top {
+  position: fixed;
+  top: 12px;
+  left: 0;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  pointer-events: none;
+  z-index: 2;
+}
+.panel {
+  background: #101f34eF;
+  border: 1px solid #38516d;
+  border-radius: 12px;
+  padding: 9px 16px;
+  font-weight: bold;
+  box-shadow: 0 4px 18px #0007;
+}
+.green { color: #5dff91; }
+.blue { color: #69baff; }
+#status { color: #ffd66b; }
+.controls {
+  position: fixed;
+  bottom: 15px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  z-index: 3;
+}
+button {
+  border: 1px solid #52708f;
+  background: #18304c;
+  color: white;
+  padding: 12px 19px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+}
+button:disabled { opacity: .5; cursor: wait; }
+button:hover { background: #294968; }
+.mobile {
+  position: fixed;
+  right: 18px;
+  bottom: 90px;
+  display: grid;
+  grid-template-columns: 48px 48px 48px;
+  grid-template-rows: 48px 48px;
+  gap: 5px;
+  z-index: 3;
+}
+.mobile button {
+  padding: 0;
+  font-size: 22px;
+  touch-action: none;
+}
+.up { grid-column: 2; }
+.left { grid-column: 1; grid-row: 2; }
+.down { grid-column: 2; grid-row: 2; }
+.right { grid-column: 3; grid-row: 2; }
+#loading {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #07111f;
+  z-index: 10;
+  font-size: 22px;
+  font-weight: bold;
+}
+@media (max-width: 650px) {
+  .top { gap: 5px; top: 7px; }
+  .panel { padding: 7px 9px; font-size: 12px; }
+  .controls { bottom: 10px; gap: 5px; }
+  button { padding: 10px 12px; font-size: 12px; }
+  .mobile { right: 10px; bottom: 78px; }
 }
 </style>
 </head>
 <body>
 
-<div id="title">🐍 YUIKA VS T.KOI</div>
-<div id="status">Loading Python engine...</div>
+<div id="loading">🐍 Loading Yuika vs T.Koi...</div>
 
-<canvas id="game"></canvas>
-
-<div id="scores">
- <div class="score" style="color:#4ade80">🟢 YUIKA: <span id="yuikaScore">0</span></div>
- <div class="score" style="color:#60a5fa">🔵 T.KOI: <span id="tkoiScore">0</span></div>
+<div id="game">
+  <canvas id="canvas"></canvas>
 </div>
 
-<div id="buttons">
- <button id="start" disabled>START</button>
- <button id="pause" disabled>PAUSE</button>
+<div class="top">
+  <div class="panel green">YUika: <span id="yuikaScore">0</span></div>
+  <div class="panel blue">T.Koi: <span id="tkoiScore">0</span></div>
+  <div class="panel" id="status">READY</div>
 </div>
 
 <div class="controls">
- <div><button data-dir="UP">⬆️</button></div>
- <div>
-  <button data-dir="LEFT">⬅️</button>
-  <button data-dir="DOWN">⬇️</button>
-  <button data-dir="RIGHT">➡️</button>
- </div>
+  <button id="startBtn" disabled>Loading...</button>
+  <button id="pauseBtn" disabled>Pause</button>
+  <button id="restartBtn" disabled>Restart</button>
 </div>
 
-<div id="help">Arrow keys / WASD to move Yuika. Avoid T.Koi, yourself and the walls!</div>
+<div class="mobile">
+  <button class="up" data-dir="up">▲</button>
+  <button class="left" data-dir="left">◀</button>
+  <button class="down" data-dir="down">▼</button>
+  <button class="right" data-dir="right">▶</button>
+</div>
 
 <script>
-const W=40,H=26,CELL=24;
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-const statusEl=document.getElementById("status");
-const startBtn=document.getElementById("start");
-const pauseBtn=document.getElementById("pause");
+const W = 40;
+const H = 26;
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-let pyodide=null;
-let timer=null;
-let paused=false;
-let gameOver=false;
+let pyodide;
+let running = false;
+let gameOver = false;
+let timer = null;
+let playerDirection = {x: 1, y: 0};
+let lastDirection = {x: 1, y: 0};
+let state = null;
 
-const pythonCode=`
-import random,json
+const directions = {
+  up: {x: 0, y: -1},
+  down: {x: 0, y: 1},
+  left: {x: -1, y: 0},
+  right: {x: 1, y: 0}
+};
 
-W=40
-H=26
+const pythonCode = `
+import random
+import json
 
-players=[]
-food=None
-game_over=False
-winner=""
-message=""
+W = 40
+H = 26
 
-def make_snake(name,body,direction):
-    return {
-        "name":name,
-        "body":body,
-        "direction":direction,
-        "next":direction,
-        "score":0
-    }
+players = []
+apple = None
+game_over = False
+winner = ""
+message = ""
 
-def reset_game():
-    global players,food,game_over,winner,message
-
-    players=[
-        make_snake("Yuika",[(8,12),(7,12),(6,12)],(1,0)),
-        make_snake("T.Koi",[(31,12),(32,12),(33,12)],(-1,0))
-    ]
-
-    game_over=False
-    winner=""
-    message=""
-    spawn_food()
-    return get_state()
-
-def occupied_cells():
-    result=set()
+def random_apple():
+    occupied = set()
     for p in players:
-        result.update(p["body"])
-    return result
+        occupied.update(p["body"])
 
-def spawn_food():
-    global food
-    occupied=occupied_cells()
-    empty=[
-        (x,y)
+    free = [
+        (x, y)
         for x in range(W)
         for y in range(H)
-        if (x,y) not in occupied
+        if (x, y) not in occupied
     ]
-    food=random.choice(empty) if empty else None
 
-def change_direction(name):
-    directions={
-        "UP":(0,-1),
-        "DOWN":(0,1),
-        "LEFT":(-1,0),
-        "RIGHT":(1,0)
-    }
-    d=directions.get(name)
-    if d:
-        current=players[0]["direction"]
-        if d!=(-current[0],-current[1]):
-            players[0]["next"]=d
+    if not free:
+        return None
+
+    return random.choice(free)
+
+def reset_game():
+    global players, apple, game_over, winner, message
+
+    players = [
+        {
+            "name": "Yuika",
+            "body": [(8, 13), (7, 13), (6, 13)],
+            "direction": (1, 0),
+            "score": 0
+        },
+        {
+            "name": "T.Koi",
+            "body": [(31, 13), (32, 13), (33, 13)],
+            "direction": (-1, 0),
+            "score": 0
+        }
+    ]
+
+    apple = random_apple()
+    game_over = False
+    winner = ""
+    message = "Eat apples and have fun!"
+
+def safe_direction(p, direction):
+    dx, dy = direction
+    hx, hy = p["body"][0]
+    nx, ny = hx + dx, hy + dy
+
+    if nx < 0 or nx >= W or ny < 0 or ny >= H:
+        return False
+
+    body = p["body"][:-1]
+    if (nx, ny) in body:
+        return False
+
+    return True
 
 def tkoi_ai():
-    p=players[1]
-    head=p["body"][0]
+    p = players[1]
 
-    options=[(1,0),(-1,0),(0,1),(0,-1)]
-    options=[
-        d for d in options
-        if d!=(-p["direction"][0],-p["direction"][1])
-    ]
-
-    occupied=occupied_cells()
-    safe=[]
-
-    for d in options:
-        x=head[0]+d[0]
-        y=head[1]+d[1]
-
-        if not (0<=x<W and 0<=y<H):
-            continue
-
-        if (x,y) in occupied and (x,y)!=p["body"][-1]:
-            continue
-
-        safe.append(d)
-
-    if not safe:
+    if apple is None:
         return p["direction"]
 
-    if food:
-        safe.sort(
-            key=lambda d:
-            abs(head[0]+d[0]-food[0])
-            +abs(head[1]+d[1]-food[1])
-        )
+    hx, hy = p["body"][0]
+    ax, ay = apple
+
+    current = p["direction"]
+
+    options = [
+        (1, 0),
+        (-1, 0),
+        (0, 1),
+        (0, -1)
+    ]
+
+    # Never reverse directly into its own body.
+    options = [
+        d for d in options
+        if not (d[0] == -current[0] and d[1] == -current[1])
+    ]
+
+    safe = [d for d in options if safe_direction(p, d)]
+
+    if not safe:
+        return current
+
+    safe.sort(
+        key=lambda d:
+        abs(hx + d[0] - ax) + abs(hy + d[1] - ay)
+        + random.random() * 0.3
+    )
 
     return safe[0]
 
-def step():
-    global game_over,winner,message,food
+def get_state():
+    return json.dumps({
+        "players": [
+            {
+                "name": p["name"],
+                "body": p["body"],
+                "score": p["score"]
+            }
+            for p in players
+        ],
+        "apple": apple,
+        "game_over": game_over,
+        "winner": winner,
+        "message": message
+    })
+
+def step(dx, dy):
+    global players, apple, game_over, winner, message
 
     if game_over:
         return get_state()
 
-    directions=[
-        players[0]["next"],
-        tkoi_ai()
-    ]
+    # Update Yuika's direction.
+    current = players[0]["direction"]
 
-    new_heads=[]
+    if not (dx == -current[0] and dy == -current[1]):
+        players[0]["direction"] = (dx, dy)
 
-    for i,p in enumerate(players):
-        d=directions[i]
-        p["direction"]=d
-        head=p["body"][0]
-        new_heads.append((head[0]+d[0],head[1]+d[1]))
+    # T.Koi chooses its own direction.
+    players[1]["direction"] = tkoi_ai()
 
-    # Wall collision
-    for i,(x,y) in enumerate(new_heads):
-        if x<0 or x>=W or y<0 or y>=H:
-            game_over=True
-            winner=players[1-i]["name"]
-            message=players[i]["name"]+" hit the wall!"
-            return get_state()
+    new_bodies = []
+    died = [False, False]
+    ate = [False, False]
 
-    growing=[
-        new_heads[i]==food for i in range(2)
-    ]
+    # Move both snakes independently.
+    # Touching the other snake is completely safe.
+    for i, p in enumerate(players):
+        hx, hy = p["body"][0]
+        vx, vy = p["direction"]
 
-    # Remove tails before checking body collisions
-    for i,p in enumerate(players):
-        if not growing[i]:
-            p["body"].pop()
+        new_head = (hx + vx, hy + vy)
 
-    dead=[False,False]
+        if new_head[0] < 0 or new_head[0] >= W:
+            died[i] = True
 
-    for i,(x,y) in enumerate(new_heads):
-        if (x,y) in players[i]["body"]:
-            dead[i]=True
+        if new_head[1] < 0 or new_head[1] >= H:
+            died[i] = True
 
-        other=players[1-i]
-        if (x,y) in other["body"]:
-            dead[i]=True
+        ate[i] = (apple is not None and new_head == apple)
 
-    # Head-to-head collision
-    if new_heads[0]==new_heads[1]:
-        dead=[True,True]
+        new_body = [new_head] + list(p["body"])
 
-    if dead[0] or dead[1]:
-        game_over=True
+        if not ate[i]:
+            new_body.pop()
 
-        if dead[0] and dead[1]:
-            winner="DRAW"
-            message="Both snakes collided!"
-        elif dead[0]:
-            winner="T.Koi"
-            message="Yuika lost the duel!"
+        # Only check collision with its OWN body.
+        if new_head in new_body[1:]:
+            died[i] = True
+
+        new_bodies.append(new_body)
+
+    # Apply the movements.
+    for i, p in enumerate(players):
+        p["body"] = new_bodies[i]
+
+    if died[0] or died[1]:
+        game_over = True
+
+        if died[0] and died[1]:
+            winner = "DRAW"
+            message = "Both snakes hit themselves or a wall!"
+        elif died[0]:
+            winner = "T.Koi"
+            message = "Yuika hit a wall or its own body!"
         else:
-            winner="Yuika"
-            message="T.Koi lost the duel!"
+            winner = "Yuika"
+            message = "T.Koi hit a wall or its own body!"
 
         return get_state()
 
-    for i,p in enumerate(players):
-        p["body"].insert(0,new_heads[i])
+    # Award apple points.
+    for i, p in enumerate(players):
+        if ate[i]:
+            p["score"] += 1
 
-        if growing[i]:
-            p["score"]+=1
+    if any(ate):
+        apple = random_apple()
 
-    if any(growing):
-        spawn_food()
+        if apple is None:
+            game_over = True
+            winner = "DRAW"
+            message = "Amazing! The board is full!"
 
     return get_state()
-
-def get_state():
-    return json.dumps({
-        "players":players,
-        "food":food,
-        "game_over":game_over,
-        "winner":winner,
-        "message":message
-    })
 
 reset_game()
 `;
 
-function resize(){
- const dpr=Math.min(window.devicePixelRatio||1,2);
- canvas.width=innerWidth*dpr;
- canvas.height=innerHeight*dpr;
- ctx.setTransform(dpr,0,0,dpr,0,0);
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = window.innerWidth * dpr;
+  canvas.height = window.innerHeight * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  draw();
 }
-window.addEventListener("resize",resize);
-resize();
 
-function draw(s){
- const vw=innerWidth;
- const vh=innerHeight;
+function draw() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
 
- const scale=Math.min(vw/(W*CELL),vh/(H*CELL));
- const ox=(vw-W*CELL*scale)/2;
- const oy=(vh-H*CELL*scale)/2;
+  ctx.clearRect(0, 0, width, height);
 
- ctx.fillStyle="#07111e";
- ctx.fillRect(0,0,vw,vh);
+  const cell = Math.min(width / W, height / H);
+  const boardW = cell * W;
+  const boardH = cell * H;
+  const ox = (width - boardW) / 2;
+  const oy = (height - boardH) / 2;
 
- ctx.save();
- ctx.translate(ox,oy);
- ctx.scale(scale,scale);
+  ctx.fillStyle = "#0b1a2b";
+  ctx.fillRect(0, 0, width, height);
 
- ctx.fillStyle="#0b1928";
- ctx.fillRect(0,0,W*CELL,H*CELL);
+  ctx.fillStyle = "#10263a";
+  ctx.fillRect(ox, oy, boardW, boardH);
 
- ctx.strokeStyle="#1d354b";
- ctx.lineWidth=1;
+  // Grid
+  ctx.strokeStyle = "#1d3850";
+  ctx.lineWidth = 0.6;
 
- for(let x=0;x<=W;x++){
-  ctx.beginPath();
-  ctx.moveTo(x*CELL,0);
-  ctx.lineTo(x*CELL,H*CELL);
-  ctx.stroke();
- }
+  for (let x = 0; x <= W; x++) {
+    ctx.beginPath();
+    ctx.moveTo(ox + x * cell, oy);
+    ctx.lineTo(ox + x * cell, oy + boardH);
+    ctx.stroke();
+  }
 
- for(let y=0;y<=H;y++){
-  ctx.beginPath();
-  ctx.moveTo(0,y*CELL);
-  ctx.lineTo(W*CELL,y*CELL);
-  ctx.stroke();
- }
+  for (let y = 0; y <= H; y++) {
+    ctx.beginPath();
+    ctx.moveTo(ox, oy + y * cell);
+    ctx.lineTo(ox + boardW, oy + y * cell);
+    ctx.stroke();
+  }
 
- ctx.strokeStyle="#4ade80";
- ctx.lineWidth=4;
- ctx.strokeRect(0,0,W*CELL,H*CELL);
+  if (!state) return;
 
- // Apple
- if(s.food){
-  const [x,y]=s.food;
-  ctx.fillStyle="#ef4444";
-  ctx.beginPath();
-  ctx.arc(x*CELL+12,y*CELL+12,9,0,Math.PI*2);
-  ctx.fill();
+  // Apple
+  if (state.apple) {
+    const [ax, ay] = state.apple;
+    const cx = ox + (ax + 0.5) * cell;
+    const cy = oy + (ay + 0.5) * cell;
 
-  ctx.fillStyle="#4ade80";
-  ctx.fillRect(x*CELL+11,y*CELL+2,3,7);
- }
+    ctx.fillStyle = "#ff4058";
+    ctx.beginPath();
+    ctx.arc(cx, cy, cell * 0.34, 0, Math.PI * 2);
+    ctx.fill();
 
- // Draw Yuika and T.Koi
- for(const p of s.players){
-  const color=p.name==="Yuika"?"#4ade80":"#60a5fa";
+    ctx.fillStyle = "#7cff76";
+    ctx.fillRect(cx + cell * 0.06, cy - cell * 0.42,
+                 cell * 0.12, cell * 0.23);
+  }
 
-  p.body.forEach(([x,y],i)=>{
-   ctx.fillStyle=color;
-   ctx.globalAlpha=i===0?1:0.85;
-   ctx.beginPath();
-   ctx.roundRect(x*CELL+1,y*CELL+1,22,22,6);
-   ctx.fill();
+  // Snakes
+  state.players.forEach((p, index) => {
+    const color = index === 0 ? "#42ed83" : "#46a9ff";
+    const dark = index === 0 ? "#168f50" : "#1769b6";
+
+    p.body.forEach(([x, y], part) => {
+      const px = ox + x * cell;
+      const py = oy + y * cell;
+      const inset = cell * 0.07;
+
+      ctx.fillStyle = part === 0 ? color : dark;
+      ctx.beginPath();
+      ctx.roundRect(
+        px + inset,
+        py + inset,
+        cell - inset * 2,
+        cell - inset * 2,
+        cell * 0.22
+      );
+      ctx.fill();
+
+      if (part === 0) {
+        ctx.fillStyle = "#ffffff";
+        ctx.beginPath();
+        ctx.arc(px + cell * 0.35, py + cell * 0.35,
+                cell * 0.08, 0, Math.PI * 2);
+        ctx.arc(px + cell * 0.65, py + cell * 0.35,
+                cell * 0.08, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
   });
 
-  ctx.globalAlpha=1;
-
-  const [hx,hy]=p.body[0];
-
-  ctx.fillStyle="#07111e";
-  ctx.beginPath();
-  ctx.arc(hx*CELL+8,hy*CELL+8,2.5,0,Math.PI*2);
-  ctx.arc(hx*CELL+16,hy*CELL+8,2.5,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.font="bold 12px Arial";
-  ctx.textAlign="center";
-  ctx.fillStyle=color;
-  ctx.fillText(p.name,hx*CELL+12,hy*CELL-5);
- }
-
- ctx.restore();
-
- document.getElementById("yuikaScore").textContent=s.players[0].score;
- document.getElementById("tkoiScore").textContent=s.players[1].score;
-
- if(s.game_over){
-  statusEl.textContent=s.message+" WINNER: "+s.winner;
- }else if(!paused){
-  statusEl.textContent="YUika VS T.Koi — EAT APPLES!";
- }
+  // Arena border
+  ctx.strokeStyle = "#6d8ba8";
+  ctx.lineWidth = 3;
+  ctx.strokeRect(ox, oy, boardW, boardH);
 }
 
-function tick(){
- if(!pyodide||gameOver)return;
+function updateUI() {
+  if (!state) return;
 
- const s=JSON.parse(pyodide.runPython("step()"));
- draw(s);
+  document.getElementById("yuikaScore").textContent =
+    state.players[0].score;
 
- if(s.game_over){
-  gameOver=true;
+  document.getElementById("tkoiScore").textContent =
+    state.players[1].score;
+
+  const status = document.getElementById("status");
+
+  if (state.game_over) {
+    status.textContent = state.winner === "DRAW"
+      ? "DRAW!"
+      : state.winner + " WINS!";
+  } else {
+    status.textContent = running ? "PLAYING" : "PAUSED";
+  }
+}
+
+function setDirection(name) {
+  const d = directions[name];
+  if (!d || gameOver) return;
+
+  if (d.x === -lastDirection.x && d.y === -lastDirection.y) {
+    return;
+  }
+
+  playerDirection = d;
+}
+
+function tick() {
+  if (!running || gameOver || !pyodide) return;
+
+  try {
+    const result = pyodide.runPython(
+      `step(${playerDirection.x}, ${playerDirection.y})`
+    );
+
+    state = JSON.parse(result);
+
+    lastDirection = {...playerDirection};
+
+    if (state.game_over) {
+      gameOver = true;
+      running = false;
+      clearInterval(timer);
+      document.getElementById("status").textContent =
+        state.winner === "DRAW"
+          ? "DRAW!"
+          : state.winner + " WINS!";
+      document.getElementById("startBtn").textContent = "Play Again";
+    }
+
+    updateUI();
+    draw();
+  } catch (error) {
+    console.error(error);
+    document.getElementById("status").textContent = "GAME ERROR";
+  }
+}
+
+function startGame() {
+  if (!pyodide) return;
+
+  if (gameOver) {
+    restartGame();
+    return;
+  }
+
+  running = true;
+  document.getElementById("startBtn").textContent = "Playing";
+  document.getElementById("status").textContent = "PLAYING";
+
   clearInterval(timer);
-  timer=null;
-  statusEl.textContent=s.message+" WINNER: "+s.winner;
- }
+  timer = setInterval(tick, 125);
 }
 
-function startGame(){
- if(!pyodide)return;
+function pauseGame() {
+  if (!running) {
+    startGame();
+    return;
+  }
 
- clearInterval(timer);
- gameOver=false;
- paused=false;
-
- pyodide.runPython("reset_game()");
- draw(JSON.parse(pyodide.runPython("get_state()")));
-
- timer=setInterval(tick,150);
- pauseBtn.textContent="PAUSE";
- statusEl.textContent="YUika VS T.Koi! GOOD LUCK!";
-}
-
-function changeDirection(dir){
- if(!pyodide||gameOver)return;
- pyodide.globals.set("requested_dir",dir);
- pyodide.runPython("change_direction(requested_dir)");
-}
-
-document.addEventListener("keydown",e=>{
- const keys={
-  ArrowUp:"UP",ArrowDown:"DOWN",
-  ArrowLeft:"LEFT",ArrowRight:"RIGHT",
-  w:"UP",W:"UP",s:"DOWN",S:"DOWN",
-  a:"LEFT",A:"LEFT",d:"RIGHT",D:"RIGHT"
- };
-
- if(keys[e.key]){
-  e.preventDefault();
-  changeDirection(keys[e.key]);
- }
-});
-
-document.querySelectorAll("[data-dir]").forEach(btn=>{
- btn.addEventListener("click",()=>changeDirection(btn.dataset.dir));
-});
-
-startBtn.addEventListener("click",startGame);
-
-pauseBtn.addEventListener("click",()=>{
- if(!pyodide||gameOver)return;
-
- if(paused){
-  paused=false;
-  timer=setInterval(tick,150);
-  pauseBtn.textContent="PAUSE";
-  statusEl.textContent="GAME RESUMED!";
- }else{
-  paused=true;
+  running = false;
   clearInterval(timer);
-  timer=null;
-  pauseBtn.textContent="RESUME";
-  statusEl.textContent="GAME PAUSED!";
- }
+
+  document.getElementById("startBtn").textContent = "Resume";
+  document.getElementById("status").textContent = "PAUSED";
+}
+
+function restartGame() {
+  if (!pyodide) return;
+
+  running = false;
+  gameOver = false;
+  clearInterval(timer);
+
+  pyodide.runPython("reset_game()");
+  state = JSON.parse(pyodide.runPython("get_state()"));
+
+  playerDirection = {x: 1, y: 0};
+  lastDirection = {x: 1, y: 0};
+
+  document.getElementById("startBtn").textContent = "Start Game";
+  document.getElementById("status").textContent = "READY";
+
+  updateUI();
+  draw();
+}
+
+document.getElementById("startBtn").onclick = startGame;
+document.getElementById("pauseBtn").onclick = pauseGame;
+document.getElementById("restartBtn").onclick = restartGame;
+
+window.addEventListener("keydown", (event) => {
+  const keys = {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+    w: "up",
+    s: "down",
+    a: "left",
+    d: "right"
+  };
+
+  if (keys[event.key]) {
+    event.preventDefault();
+    setDirection(keys[event.key]);
+  }
+
+  if (event.code === "Space") {
+    event.preventDefault();
+    pauseGame();
+  }
 });
 
-async function initialize(){
- try{
-  statusEl.textContent="Loading Python...";
-  pyodide=await loadPyodide();
-  pyodide.runPython(pythonCode);
-  draw(JSON.parse(pyodide.runPython("get_state()")));
-  startBtn.disabled=false;
-  pauseBtn.disabled=false;
-  statusEl.textContent="YUika VS T.Koi! PRESS START!";
- }catch(e){
-  statusEl.textContent="Loading error: "+e.message;
-  console.error(e);
- }
+document.querySelectorAll(".mobile button").forEach(button => {
+  button.addEventListener("pointerdown", event => {
+    event.preventDefault();
+    setDirection(button.dataset.dir);
+  });
+});
+
+window.addEventListener("resize", resize);
+
+async function initialize() {
+  resize();
+
+  try {
+    pyodide = await loadPyodide();
+    await pyodide.runPythonAsync(pythonCode);
+
+    state = JSON.parse(pyodide.runPython("get_state()"));
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("pauseBtn").disabled = false;
+    document.getElementById("restartBtn").disabled = false;
+
+    document.getElementById("startBtn").textContent = "Start Game";
+
+    updateUI();
+    draw();
+  } catch (error) {
+    document.getElementById("loading").textContent =
+      "Could not load game. Please refresh the page.";
+    console.error(error);
+  }
 }
 
 initialize();
