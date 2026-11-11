@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>KOI SNAKE - Duel</title>
+<title>YUika VS T.Koi - Snake Duel</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -30,14 +30,14 @@ button{border:0;border-radius:8px;padding:12px 16px;background:#22c55e;color:#07
 </head>
 <body>
 
-<div id="title">🐍 KOI SNAKE DUEL</div>
+<div id="title">🐍 YUIKA VS T.KOI</div>
 <div id="status">Loading Python engine...</div>
 
 <canvas id="game"></canvas>
 
 <div id="scores">
- <div class="score" style="color:#4ade80">🟢 KOI: <span id="koiScore">0</span></div>
- <div class="score" style="color:#60a5fa">🔵 SOWA: <span id="sowaScore">0</span></div>
+ <div class="score" style="color:#4ade80">🟢 YUIKA: <span id="yuikaScore">0</span></div>
+ <div class="score" style="color:#60a5fa">🔵 T.KOI: <span id="tkoiScore">0</span></div>
 </div>
 
 <div id="buttons">
@@ -54,12 +54,15 @@ button{border:0;border-radius:8px;padding:12px 16px;background:#22c55e;color:#07
  </div>
 </div>
 
-<div id="help">Arrow keys / WASD to move Koi. Avoid Sowa, yourself and the walls!</div>
+<div id="help">Arrow keys / WASD to move Yuika. Avoid T.Koi, yourself and the walls!</div>
 
 <script>
 const W=40,H=26,CELL=24;
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
+const statusEl=document.getElementById("status");
+const startBtn=document.getElementById("start");
+const pauseBtn=document.getElementById("pause");
 
 let pyodide=null;
 let timer=null;
@@ -98,7 +101,6 @@ def reset_game():
     game_over=False
     winner=""
     message=""
-
     spawn_food()
     return get_state()
 
@@ -132,10 +134,9 @@ def change_direction(name):
         if d!=(-current[0],-current[1]):
             players[0]["next"]=d
 
-def sowa_ai():
+def tkoi_ai():
     p=players[1]
     head=p["body"][0]
-    koi=players[0]["body"][0]
 
     options=[(1,0),(-1,0),(0,1),(0,-1)]
     options=[
@@ -161,7 +162,6 @@ def sowa_ai():
     if not safe:
         return p["direction"]
 
-    # Sowa tries to approach the apple.
     if food:
         safe.sort(
             key=lambda d:
@@ -179,7 +179,7 @@ def step():
 
     directions=[
         players[0]["next"],
-        sowa_ai()
+        tkoi_ai()
     ]
 
     new_heads=[]
@@ -198,17 +198,15 @@ def step():
             message=players[i]["name"]+" hit the wall!"
             return get_state()
 
-    # Both snakes move simultaneously.
-    # Determine which bodies remain after movement.
     growing=[
         new_heads[i]==food for i in range(2)
     ]
 
+    # Remove tails before checking body collisions
     for i,p in enumerate(players):
         if not growing[i]:
             p["body"].pop()
 
-    # Self collision and collision with the other snake.
     dead=[False,False]
 
     for i,(x,y) in enumerate(new_heads):
@@ -230,11 +228,11 @@ def step():
             winner="DRAW"
             message="Both snakes collided!"
         elif dead[0]:
-            winner="Sowa"
-            message="Koi lost the duel!"
+            winner="T.Koi"
+            message="Yuika lost the duel!"
         else:
-            winner="Koi"
-            message="Sowa lost the duel!"
+            winner="Yuika"
+            message="T.Koi lost the duel!"
 
         return get_state()
 
@@ -297,6 +295,7 @@ function draw(s){
   ctx.lineTo(x*CELL,H*CELL);
   ctx.stroke();
  }
+
  for(let y=0;y<=H;y++){
   ctx.beginPath();
   ctx.moveTo(0,y*CELL);
@@ -315,13 +314,14 @@ function draw(s){
   ctx.beginPath();
   ctx.arc(x*CELL+12,y*CELL+12,9,0,Math.PI*2);
   ctx.fill();
+
   ctx.fillStyle="#4ade80";
   ctx.fillRect(x*CELL+11,y*CELL+2,3,7);
  }
 
- // Draw both snakes
+ // Draw Yuika and T.Koi
  for(const p of s.players){
-  const color=p.name==="Koi"?"#4ade80":"#60a5fa";
+  const color=p.name==="Yuika"?"#4ade80":"#60a5fa";
 
   p.body.forEach(([x,y],i)=>{
    ctx.fillStyle=color;
@@ -349,13 +349,13 @@ function draw(s){
 
  ctx.restore();
 
- document.getElementById("koiScore").textContent=s.players[0].score;
- document.getElementById("sowaScore").textContent=s.players[1].score;
+ document.getElementById("yuikaScore").textContent=s.players[0].score;
+ document.getElementById("tkoiScore").textContent=s.players[1].score;
 
  if(s.game_over){
   statusEl.textContent=s.message+" WINNER: "+s.winner;
  }else if(!paused){
-  statusEl.textContent="EAT APPLES! DON'T CRASH!";
+  statusEl.textContent="YUika VS T.Koi — EAT APPLES!";
  }
 }
 
@@ -385,7 +385,7 @@ function startGame(){
 
  timer=setInterval(tick,150);
  pauseBtn.textContent="PAUSE";
- statusEl.textContent="KOI VS SOWA! GOOD LUCK!";
+ statusEl.textContent="YUika VS T.Koi! GOOD LUCK!";
 }
 
 function changeDirection(dir){
@@ -401,6 +401,7 @@ document.addEventListener("keydown",e=>{
   w:"UP",W:"UP",s:"DOWN",S:"DOWN",
   a:"LEFT",A:"LEFT",d:"RIGHT",D:"RIGHT"
  };
+
  if(keys[e.key]){
   e.preventDefault();
   changeDirection(keys[e.key]);
@@ -411,7 +412,7 @@ document.querySelectorAll("[data-dir]").forEach(btn=>{
  btn.addEventListener("click",()=>changeDirection(btn.dataset.dir));
 });
 
-document.getElementById("start").addEventListener("click",startGame);
+startBtn.addEventListener("click",startGame);
 
 pauseBtn.addEventListener("click",()=>{
  if(!pyodide||gameOver)return;
@@ -438,7 +439,7 @@ async function initialize(){
   draw(JSON.parse(pyodide.runPython("get_state()")));
   startBtn.disabled=false;
   pauseBtn.disabled=false;
-  statusEl.textContent="KOI VS SOWA! PRESS START!";
+  statusEl.textContent="YUika VS T.Koi! PRESS START!";
  }catch(e){
   statusEl.textContent="Loading error: "+e.message;
   console.error(e);
