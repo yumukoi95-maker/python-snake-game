@@ -118,11 +118,11 @@ button:disabled { opacity: .5; }
 </head>
 <body>
 
-<div id="loading">🐍 Loading Yuika vs T.Koi...</div>
+<div id="loading">🐍 Loading Player vs T.Koi...</div>
 <canvas id="canvas"></canvas>
 
 <div class="top">
-  <div class="panel green">YUIKA: <span id="yuikaScore">0</span></div>
+  <div class="panel green">Player: <span id="PlayerScore">0</span></div>
   <div class="panel blue">T.KOI: <span id="tkoiScore">0</span></div>
   <div class="panel" id="status">READY</div>
 </div>
@@ -202,7 +202,7 @@ def reset_game():
 
     players = [
         {
-            "name": "Yuika",
+            "name": "Player",
             "body": [(8, 13), (7, 13), (6, 13)],
             "direction": (1, 0),
             "score": 0
@@ -332,9 +332,9 @@ def step(dx, dy):
             message = "Both snakes crashed!"
         elif died[0]:
             winner = "T.Koi"
-            message = "Yuika crashed!"
+            message = "Player crashed!"
         else:
-            winner = "Yuika"
+            winner = "Player"
             message = "T.Koi crashed!"
 
         return get_state()
@@ -508,7 +508,7 @@ function draw() {
 function updateUI() {
   if (!state) return;
 
-  document.getElementById("yuikaScore").textContent =
+  document.getElementById("PlayerScore").textContent =
     state.players[0].score;
 
   document.getElementById("tkoiScore").textContent =
