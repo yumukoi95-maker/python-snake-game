@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>YUika VS T.Koi</title>
+<title>Elemtary VS T.Koi</title>
 <script src="https://cdn.jsdelivr.net/pyodide/v0.27.7/full/pyodide.js"></script>
 <style>
 * { box-sizing: border-box; }
@@ -118,11 +118,11 @@ button:disabled { opacity: .5; }
 </head>
 <body>
 
-<div id="loading">🐍 Loading Yayoi vs T.Koi...</div>
+<div id="loading">🐍 Loading Elementary vs T.Koi...</div>
 <canvas id="canvas"></canvas>
 
 <div class="top">
-  <div class="panel green">Yayoi: <span id="YayoiScore">0</span></div>
+  <div class="panel green">Elementary: <span id="YayoiScore">0</span></div>
   <div class="panel blue">T.KOI: <span id="tkoiScore">0</span></div>
   <div class="panel" id="status">READY</div>
 </div>
@@ -202,7 +202,7 @@ def reset_game():
 
     players = [
         {
-            "name": "Player",
+            "name": "Elemetary",
             "body": [(8, 13), (7, 13), (6, 13)],
             "direction": (1, 0),
             "score": 0
