@@ -3,620 +3,584 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KOI SNAKE - Two Player Battle</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KOI SNAKE - 2 Player Battle</title>
 <style>
 *{box-sizing:border-box}
-body{
-  margin:0;background:#07111f;color:white;
-  font-family:Arial,Helvetica,sans-serif;
-  min-height:100vh;overflow:hidden
-}
+body{margin:0;background:#07111f;color:white;font-family:Arial,sans-serif;overflow:hidden}
 button,input{font:inherit}
-button{
-  border:0;border-radius:12px;padding:13px 22px;
-  color:white;background:#16a34a;font-weight:bold;
-  cursor:pointer
-}
-button:hover{filter:brightness(1.13)}
+button{border:0;border-radius:10px;padding:12px 18px;background:#16a34a;color:white;font-weight:bold;cursor:pointer}
 button.secondary{background:#334155}
-button.blue{background:#2563eb}
-#app{
-  width:100vw;height:100dvh;display:flex;
-  flex-direction:column;padding:12px;gap:10px
-}
-header{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:12px;flex-wrap:wrap
-}
-h1{font-size:clamp(20px,3vw,32px);margin:0;letter-spacing:2px}
-#status{font-size:12px;color:#94a3b8}
-.scores{display:flex;gap:10px;flex-wrap:wrap}
-.score{
-  padding:9px 15px;border-radius:12px;
-  background:#17263a;min-width:120px
-}
-.score strong{display:block;font-size:18px}
-.green{color:#4ade80}.blueText{color:#60a5fa}
-#arena{
-  flex:1;min-height:0;position:relative;
-  border:2px solid #334155;border-radius:16px;
-  overflow:hidden;background:#0b1726
-}
-canvas{display:block;width:100%;height:100%}
-#menu{
-  position:absolute;inset:0;display:flex;align-items:center;
-  justify-content:center;background:#06101bdc;
-  padding:14px;overflow:auto
-}
-.panel{
-  width:min(520px,100%);padding:22px;
-  background:#142338;border:1px solid #334155;
-  border-radius:20px;box-shadow:0 15px 60px #0008
-}
-.panel h2{text-align:center;margin:0 0 8px;font-size:26px}
-.subtitle{text-align:center;color:#94a3b8;margin:0 0 20px}
-.playerEdit{
-  padding:13px;border-radius:13px;background:#0b1726;
-  margin:10px 0
-}
-.playerEdit label{display:block;font-size:13px;margin-bottom:8px;font-weight:bold}
-.playerEdit input{
-  width:100%;padding:12px;border-radius:9px;
-  border:1px solid #475569;background:#17263a;color:white;
-  outline:none
-}
-.playerEdit input:focus{border-color:#60a5fa}
-.actions{display:flex;gap:9px;margin-top:17px}
+#app{height:100dvh;width:100vw;display:flex;flex-direction:column;padding:10px;gap:9px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(21px,3vw,32px)}
+#status,#pads{font-size:12px;color:#94a3b8;margin-top:4px}
+.scores{display:flex;gap:9px}
+.score{background:#17263a;padding:8px 13px;border-radius:10px;min-width:110px}
+.score strong{display:block;font-size:19px}
+.green{color:#4ade80}.blue{color:#60a5fa}
+#arena{position:relative;flex:1;min-height:0;border:2px solid #334155;border-radius:14px;overflow:hidden;background:#0b1726}
+canvas{width:100%;height:100%;display:block}
+.overlay{position:absolute;inset:0;background:#06101be8;display:flex;align-items:center;justify-content:center;padding:12px;overflow:auto}
+.panel{background:#142338;border:1px solid #334155;border-radius:18px;padding:22px;width:min(480px,100%);box-shadow:0 15px 50px #0008}
+.panel h2{text-align:center;margin:0 0 8px}
+.subtitle{text-align:center;color:#94a3b8;font-size:14px;margin:0 0 18px}
+.edit{padding:12px;background:#0b1726;border-radius:12px;margin:10px 0}
+.edit label{display:block;font-size:13px;font-weight:bold;margin-bottom:7px}
+.edit input{width:100%;padding:11px;border-radius:8px;background:#17263a;border:1px solid #475569;color:white}
+.actions{display:flex;gap:9px;margin-top:15px}
 .actions button{flex:1}
-.help{
-  font-size:12px;line-height:1.7;color:#a8b6c9;
-  margin-top:15px
-}
-#gameOver{
-  display:none;position:absolute;inset:0;
-  align-items:center;justify-content:center;
-  background:#06101bdc;padding:15px
-}
+.help{font-size:12px;line-height:1.7;color:#a8b6c9;margin-top:15px}
+#gameOver{display:none}
 #gameOver .panel{text-align:center}
-#gameOver h2{font-size:32px}
-footer{
-  display:flex;justify-content:space-between;align-items:center;
-  gap:10px;flex-wrap:wrap;color:#94a3b8;font-size:12px
-}
+#resultTitle{font-size:30px}
+footer{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;color:#94a3b8;font-size:12px}
 .footerButtons{display:flex;gap:8px}
-.footerButtons button{padding:9px 14px}
+.footerButtons button{padding:9px 13px}
 @media(max-width:600px){
-  #app{padding:7px;gap:7px}
-  .score{min-width:95px;padding:7px 10px}
-  .score strong{font-size:15px}
-  footer{font-size:10px}
-  .footerButtons button{padding:8px 10px}
+ #app{padding:6px;gap:6px}
+ .score{min-width:85px;padding:7px}
+ .score strong{font-size:16px}
+ footer{font-size:10px}
 }
 </style>
 </head>
 <body>
 <div id="app">
-  <header>
-    <div>
-      <h1>🐍 KOI SNAKE</h1>
-      <div id="status">Connect two controllers to begin</div>
-    </div>
-    <div class="scores">
-      <div class="score">
-        <span class="green" id="name1Display">ELEMENTARY</span>
-        <strong id="score1">0</strong>
-      </div>
-      <div class="score">
-        <span class="blueText" id="name2Display">T.KOI</span>
-        <strong id="score2">0</strong>
-      </div>
-    </div>
-  </header>
+<header>
+ <div>
+  <h1>🐍 KOI SNAKE</h1>
+  <div id="status">Two-player battle</div>
+ </div>
+ <div class="scores">
+  <div class="score"><span class="green" id="name1Display">ELEMENTARY</span><strong id="score1">0</strong></div>
+  <div class="score"><span class="blue" id="name2Display">T.KOI</span><strong id="score2">0</strong></div>
+ </div>
+</header>
 
-  <div id="arena">
-    <canvas id="game"></canvas>
+<div id="arena">
+ <canvas id="game"></canvas>
 
-    <div id="menu">
-      <div class="panel">
-        <h2>🐍 KOI SNAKE</h2>
-        <p class="subtitle">Two players. One arena. Who gets the most apples?</p>
+ <div class="overlay" id="menu">
+  <div class="panel">
+   <h2>🐍 KOI SNAKE</h2>
+   <p class="subtitle">Two players. One arena. Eat apples and survive!</p>
 
-        <div class="playerEdit">
-          <label class="green" for="player1Name">PLAYER 1 — GREEN SNAKE</label>
-          <input id="player1Name" maxlength="16" value="ELEMENTARY"
-                 placeholder="Player 1 name">
-        </div>
+   <div class="edit">
+    <label class="green">PLAYER 1 — GREEN SNAKE</label>
+    <input id="player1Name" maxlength="16" value="ELEMENTARY">
+   </div>
+   <div class="edit">
+    <label class="blue">PLAYER 2 — BLUE SNAKE</label>
+    <input id="player2Name" maxlength="16" value="T.KOI">
+   </div>
 
-        <div class="playerEdit">
-          <label class="blueText" for="player2Name">PLAYER 2 — BLUE SNAKE</label>
-          <input id="player2Name" maxlength="16" value="T.KOI"
-                 placeholder="Player 2 name">
-        </div>
-
-        <div class="actions">
-          <button id="startBtn">START BATTLE</button>
-          <button class="secondary" id="saveBtn">SAVE NAMES</button>
-        </div>
-
-        <div class="help">
-          <b>PS5 controllers:</b> Left stick or D-pad to move.<br>
-          <b>Keyboard backup:</b> Player 1 = W A S D, Player 2 = Arrow keys.<br>
-          <b>Game rules:</b> Eat apples to score. Touching the other snake is safe.
-          Hit the wall or your own body and you lose!
-        </div>
-      </div>
-    </div>
-
-    <div id="gameOver">
-      <div class="panel">
-        <h2 id="resultTitle">GAME OVER</h2>
-        <p id="resultText"></p>
-        <div class="actions">
-          <button id="againBtn">PLAY AGAIN</button>
-          <button class="secondary" id="editBtn">EDIT NAMES</button>
-        </div>
-      </div>
-    </div>
+   <div class="actions">
+    <button id="startBtn">START BATTLE</button>
+    <button class="secondary" id="saveBtn">SAVE NAMES</button>
+   </div>
+   <div class="help">
+    <b>PS5 controllers:</b> Controller 1 = Player 1. Controller 2 = Player 2.<br>
+    <b>Keyboard:</b> Player 1 = W A S D. Player 2 = Arrow keys.<br>
+    <b>Rules:</b> Eat apples. Touching the other snake is safe. Hitting a wall or your own body eliminates you.
+   </div>
   </div>
+ </div>
 
-  <footer>
-    <div id="controllerStatus">Controllers: waiting for connection</div>
-    <div class="footerButtons">
-      <button class="secondary" id="pauseBtn">PAUSE</button>
-      <button class="secondary" id="menuBtn">MENU / NAMES</button>
-    </div>
-  </footer>
+ <div class="overlay" id="gameOver" style="display:none">
+  <div class="panel">
+   <h2 id="resultTitle">GAME OVER</h2>
+   <p id="resultText"></p>
+   <div class="actions">
+    <button id="againBtn">PLAY AGAIN</button>
+    <button class="secondary" id="editBtn">EDIT NAMES</button>
+   </div>
+  </div>
+ </div>
+</div>
+
+<footer>
+ <div id="pads">Controllers: waiting for connection</div>
+ <div class="footerButtons">
+  <button class="secondary" id="pauseBtn">PAUSE</button>
+  <button class="secondary" id="menuBtn">MENU / NAMES</button>
+ </div>
+</footer>
 </div>
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
-const arena = document.getElementById("arena");
+"use strict";
 
-const nameInputs = [
-  document.getElementById("player1Name"),
-  document.getElementById("player2Name")
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const arena=document.getElementById("arena");
+
+const nameInputs=[
+ document.getElementById("player1Name"),
+ document.getElementById("player2Name")
 ];
 
-let names = ["ELEMENTARY","T.KOI"];
-let scores = [0,0];
-let snakes = [];
-let apple = {x:10,y:10};
-let running = false;
-let gameEnded = false;
-let paused = false;
-let tickCount = 0;
-let lastTime = 0;
-let accumulator = 0;
-let cell = 22;
-let cols = 30;
-let rows = 20;
-let connectedPads = [];
-let directions = [
-  {x:1,y:0},
-  {x:-1,y:0}
-];
+let names=["ELEMENTARY","T.KOI"];
+let scores=[0,0];
+let snakes=[];
+let apple={x:10,y:10};
+let running=false,paused=false,gameEnded=false;
+let cell=22,cols=30,rows=20;
+let lastTime=0,accumulator=0;
+const STEP=115;
 
-const STEP_MS = 115;
-
-function loadNames(){
-  try{
-    const saved = JSON.parse(localStorage.getItem("koiSnakeNames"));
-    if(Array.isArray(saved)){
-      names = [
-        cleanName(saved[0]) || "ELEMENTARY",
-        cleanName(saved[1]) || "T.KOI"
-      ];
-    }
-  }catch(e){}
-  nameInputs[0].value = names[0];
-  nameInputs[1].value = names[1];
-  updateNameDisplays();
-}
+let previousButtons={};
 
 function cleanName(value){
-  return String(value || "").trim().replace(/[<>]/g,"").slice(0,16);
+ return String(value||"").trim().replace(/[<>]/g,"").slice(0,16);
+}
+
+function loadNames(){
+ try{
+  const saved=JSON.parse(localStorage.getItem("koiSnakeNames"));
+  if(Array.isArray(saved)){
+   names=[
+    cleanName(saved[0])||"ELEMENTARY",
+    cleanName(saved[1])||"T.KOI"
+   ];
+  }
+ }catch(e){}
+ nameInputs[0].value=names[0];
+ nameInputs[1].value=names[1];
+ updateNameDisplay();
 }
 
 function saveNames(){
-  names = [
-    cleanName(nameInputs[0].value) || "PLAYER 1",
-    cleanName(nameInputs[1].value) || "PLAYER 2"
-  ];
-  nameInputs[0].value = names[0];
-  nameInputs[1].value = names[1];
-
-  try{
-    localStorage.setItem("koiSnakeNames",JSON.stringify(names));
-  }catch(e){}
-
-  updateNameDisplays();
+ names=[
+  cleanName(nameInputs[0].value)||"PLAYER 1",
+  cleanName(nameInputs[1].value)||"PLAYER 2"
+ ];
+ nameInputs[0].value=names[0];
+ nameInputs[1].value=names[1];
+ try{
+  localStorage.setItem("koiSnakeNames",JSON.stringify(names));
+ }catch(e){}
+ updateNameDisplay();
+ draw();
 }
 
-function updateNameDisplays(){
-  document.getElementById("name1Display").textContent = names[0];
-  document.getElementById("name2Display").textContent = names[1];
-}
-
-function resize(){
-  const rect = arena.getBoundingClientRect();
-  const dpr = Math.min(window.devicePixelRatio || 1,2);
-  canvas.width = Math.max(1,Math.floor(rect.width*dpr));
-  canvas.height = Math.max(1,Math.floor(rect.height*dpr));
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-
-  const w = rect.width;
-  const h = rect.height;
-  cell = Math.max(14,Math.min(28,Math.floor(Math.min(w/40,h/24))));
-  cols = Math.max(12,Math.floor(w/cell));
-  rows = Math.max(10,Math.floor(h/cell));
-
-  draw();
-}
-
-function makeSnake(x,y,dir,color){
-  return {
-    body:[
-      {x,y},
-      {x:x-dir.x,y:y-dir.y},
-      {x:x-dir.x*2,y:y-dir.y*2},
-      {x:x-dir.x*3,y:y-dir.y*3}
-    ],
-    dir:{...dir},
-    nextDir:{...dir},
-    color,
-    alive:true
-  };
-}
-
-function newGame(){
-  scores=[0,0];
-  tickCount=0;
-  gameEnded=false;
-  paused=false;
-  running=true;
-  directions=[
-    {x:1,y:0},
-    {x:-1,y:0}
-  ];
-
-  const middleY=Math.floor(rows/2);
-  const leftX=Math.floor(cols*0.25);
-  const rightX=Math.floor(cols*0.75);
-
-  snakes=[
-    makeSnake(leftX,middleY,{x:1,y:0},"#4ade80"),
-    makeSnake(rightX,middleY,{x:-1,y:0},"#60a5fa")
-  ];
-
-  placeApple();
-  updateScores();
-  document.getElementById("menu").style.display="none";
-  document.getElementById("gameOver").style.display="none";
-  document.getElementById("pauseBtn").textContent="PAUSE";
-  document.getElementById("status").textContent="BATTLE IN PROGRESS";
-  lastTime=performance.now();
-  accumulator=0;
-  draw();
-}
-
-function placeApple(){
-  let attempts=0;
-  do{
-    apple={
-      x:Math.floor(Math.random()*cols),
-      y:Math.floor(Math.random()*rows)
-    };
-    attempts++;
-  }while(attempts<1000 && snakes.some(s=>s.body.some(p=>p.x===apple.x&&p.y===apple.y)));
+function updateNameDisplay(){
+ document.getElementById("name1Display").textContent=names[0];
+ document.getElementById("name2Display").textContent=names[1];
 }
 
 function updateScores(){
-  document.getElementById("score1").textContent=scores[0];
-  document.getElementById("score2").textContent=scores[1];
+ document.getElementById("score1").textContent=scores[0];
+ document.getElementById("score2").textContent=scores[1];
+}
+
+function resize(){
+ const rect=arena.getBoundingClientRect();
+ const dpr=Math.min(window.devicePixelRatio||1,2);
+ canvas.width=Math.max(1,Math.floor(rect.width*dpr));
+ canvas.height=Math.max(1,Math.floor(rect.height*dpr));
+ ctx.setTransform(dpr,0,0,dpr,0,0);
+
+ cell=Math.max(14,Math.min(28,Math.floor(Math.min(rect.width/40,rect.height/24))));
+ cols=Math.max(12,Math.floor(rect.width/cell));
+ rows=Math.max(10,Math.floor(rect.height/cell));
+ draw();
+}
+
+function makeSnake(x,y,dx,dy,color){
+ return{
+  body:[
+   {x,y},
+   {x:x-dx,y:y-dy},
+   {x:x-dx*2,y:y-dy*2},
+   {x:x-dx*3,y:y-dy*3}
+  ],
+  dir:{x:dx,y:dy},
+  nextDir:{x:dx,y:dy},
+  color,
+  alive:true
+ };
+}
+
+function newGame(){
+ saveNames();
+ const mid=Math.floor(rows/2);
+
+ snakes=[
+  makeSnake(Math.floor(cols*.25),mid,1,0,"#4ade80"),
+  makeSnake(Math.floor(cols*.75),mid,-1,0,"#60a5fa")
+ ];
+
+ scores=[0,0];
+ updateScores();
+
+ running=true;
+ paused=false;
+ gameEnded=false;
+ accumulator=0;
+ lastTime=performance.now();
+
+ placeApple();
+
+ document.getElementById("menu").style.display="none";
+ document.getElementById("gameOver").style.display="none";
+ document.getElementById("pauseBtn").textContent="PAUSE";
+ document.getElementById("status").textContent="BATTLE IN PROGRESS";
+ draw();
+}
+
+function placeApple(){
+ const occupied=new Set();
+ snakes.forEach(s=>s.body.forEach(p=>occupied.add(p.x+","+p.y)));
+
+ const free=[];
+ for(let y=0;y<rows;y++){
+  for(let x=0;x<cols;x++){
+   if(!occupied.has(x+","+y))free.push({x,y});
+  }
+ }
+
+ if(!free.length){
+  finishGame("board");
+  return;
+ }
+ apple=free[Math.floor(Math.random()*free.length)];
 }
 
 function setDirection(player,dx,dy){
-  if(!running || paused || gameEnded)return;
-  const s=snakes[player];
-  if(!s || !s.alive)return;
+ if(!running||paused||gameEnded)return;
+ const s=snakes[player];
+ if(!s||!s.alive)return;
 
-  // Prevent instant 180-degree turns.
-  if(dx===-s.dir.x && dy===-s.dir.y)return;
-  s.nextDir={x:dx,y:dy};
+ if(dx===-s.dir.x&&dy===-s.dir.y)return;
+ s.nextDir={x:dx,y:dy};
 }
 
 function moveSnake(index){
-  const s=snakes[index];
-  if(!s.alive)return;
+ const s=snakes[index];
+ if(!s.alive)return;
 
-  s.dir={...s.nextDir};
-  const head=s.body[0];
-  const next={x:head.x+s.dir.x,y:head.y+s.dir.y};
+ s.dir={...s.nextDir};
+ const head=s.body[0];
+ const next={x:head.x+s.dir.x,y:head.y+s.dir.y};
 
-  // Wall collision.
-  if(next.x<0 || next.y<0 || next.x>=cols || next.y>=rows){
-    s.alive=false;
-    return;
-  }
+ // Wall collision
+ if(next.x<0||next.y<0||next.x>=cols||next.y>=rows){
+  s.alive=false;
+  return;
+ }
 
-  const eating=next.x===apple.x && next.y===apple.y;
+ const eating=next.x===apple.x&&next.y===apple.y;
 
-  // Own-body collision. The tail can move away if not eating.
-  const bodyToCheck=eating?s.body:s.body.slice(0,-1);
-  if(bodyToCheck.some(p=>p.x===next.x&&p.y===next.y)){
-    s.alive=false;
-    return;
-  }
+ // Check collision with own body.
+ const checkBody=eating?s.body:s.body.slice(0,-1);
+ if(checkBody.some(p=>p.x===next.x&&p.y===next.y)){
+  s.alive=false;
+  return;
+ }
 
-  s.body.unshift(next);
+ s.body.unshift(next);
 
-  if(eating){
-    scores[index]++;
-    updateScores();
-    placeApple();
-  }else{
-    s.body.pop();
-  }
+ if(eating){
+  scores[index]++;
+  updateScores();
+ }else{
+  s.body.pop();
+ }
 }
 
 function gameTick(){
-  if(!running || paused || gameEnded)return;
-  tickCount++;
+ if(!running||paused||gameEnded)return;
 
-  moveSnake(0);
-  moveSnake(1);
+ // Both players move before winner detection.
+ moveSnake(0);
+ moveSnake(1);
 
-  // Snakes are allowed to pass through or overlap each other.
-  if(!snakes[0].alive || !snakes[1].alive){
-    finishGame();
-  }
+ // Opponent snake collision is intentionally disabled.
+ if(!snakes[0].alive||!snakes[1].alive){
+  finishGame("survival");
+  return;
+ }
+
+ if(snakes[0].body.length+snakes[1].body.length>=cols*rows-1){
+  finishGame("board");
+  return;
+ }
+
+ if(snakes.some(s=>s.body.some(p=>p.x===apple.x&&p.y===apple.y))){
+  placeApple();
+ }
 }
 
-function finishGame(){
-  running=false;
-  gameEnded=true;
-  const a=snakes[0].alive;
-  const b=snakes[1].alive;
+function finishGame(reason){
+ if(gameEnded)return;
 
-  let title="DRAW!";
-  let message="Both players are out!";
+ running=false;
+ paused=false;
+ gameEnded=true;
 
-  if(a && !b){
+ let title="";
+ let message="";
+
+ if(reason==="survival"){
+  const p1=snakes[0].alive;
+  const p2=snakes[1].alive;
+
+  if(p1&&!p2){
+   title=names[0]+" WINS!";
+   message=names[0]+" is the last snake alive!";
+  }else if(p2&&!p1){
+   title=names[1]+" WINS!";
+   message=names[1]+" is the last snake alive!";
+  }else{
+   // Both eliminated in the same tick: highest score wins.
+   if(scores[0]>scores[1]){
     title=names[0]+" WINS!";
-    message=names[0]+" wins this battle!";
-  }else if(b && !a){
+    message="Both snakes were eliminated. Higher score wins!";
+   }else if(scores[1]>scores[0]){
     title=names[1]+" WINS!";
-    message=names[1]+" wins this battle!";
+    message="Both snakes were eliminated. Higher score wins!";
+   }else{
+    title="IT'S A DRAW!";
+    message="Both players were eliminated with equal scores!";
+   }
   }
+ }else{
+  if(scores[0]>scores[1]){
+   title=names[0]+" WINS!";
+  }else if(scores[1]>scores[0]){
+   title=names[1]+" WINS!";
+  }else{
+   title="IT'S A DRAW!";
+  }
+  message="The arena is full!";
+ }
 
-  document.getElementById("resultTitle").textContent=title;
-  document.getElementById("resultText").textContent=
-    message+" Final score: "+names[0]+" "+scores[0]+" — "+names[1]+" "+scores[1];
-  document.getElementById("gameOver").style.display="flex";
-  document.getElementById("status").textContent="BATTLE FINISHED";
+ document.getElementById("resultTitle").textContent=title;
+ document.getElementById("resultText").textContent=
+  message+" Final score: "+names[0]+" "+scores[0]+" — "+names[1]+" "+scores[1];
+
+ document.getElementById("gameOver").style.display="flex";
+ document.getElementById("status").textContent="BATTLE FINISHED";
 }
 
 function togglePause(){
-  if(!running || gameEnded)return;
-  paused=!paused;
-  document.getElementById("pauseBtn").textContent=paused?"RESUME":"PAUSE";
-  document.getElementById("status").textContent=paused?"PAUSED":"BATTLE IN PROGRESS";
-  lastTime=performance.now();
-  accumulator=0;
-  draw();
+ if(!running||gameEnded)return;
+ paused=!paused;
+ accumulator=0;
+ lastTime=performance.now();
+ document.getElementById("pauseBtn").textContent=paused?"RESUME":"PAUSE";
+ document.getElementById("status").textContent=paused?"PAUSED":"BATTLE IN PROGRESS";
+ draw();
 }
 
 function showMenu(){
-  running=false;
-  paused=false;
-  gameEnded=false;
-  document.getElementById("gameOver").style.display="none";
-  document.getElementById("menu").style.display="flex";
-  document.getElementById("pauseBtn").textContent="PAUSE";
-  document.getElementById("status").textContent="Ready for another battle?";
-  nameInputs[0].value=names[0];
-  nameInputs[1].value=names[1];
-  draw();
+ running=false;
+ paused=false;
+ gameEnded=false;
+ document.getElementById("gameOver").style.display="none";
+ document.getElementById("menu").style.display="flex";
+ document.getElementById("pauseBtn").textContent="PAUSE";
+ document.getElementById("status").textContent="Ready for another battle";
+ nameInputs[0].value=names[0];
+ nameInputs[1].value=names[1];
+ draw();
 }
+
+// Keyboard controls
+window.addEventListener("keydown",e=>{
+ const k=e.key.toLowerCase();
+ const used=["arrowup","arrowdown","arrowleft","arrowright"," "];
+ if(used.includes(k))e.preventDefault();
+
+ if(k==="w")setDirection(0,0,-1);
+ if(k==="s")setDirection(0,0,1);
+ if(k==="a")setDirection(0,-1,0);
+ if(k==="d")setDirection(0,1,0);
+
+ if(k==="arrowup")setDirection(1,0,-1);
+ if(k==="arrowdown")setDirection(1,0,1);
+ if(k==="arrowleft")setDirection(1,-1,0);
+ if(k==="arrowright")setDirection(1,1,0);
+
+ if(k===" "){
+  if(!running&&!gameEnded)newGame();
+  else togglePause();
+ }
+ if(k==="escape")togglePause();
+});
+
+// Controller assignment: connected pads sorted by browser gamepad index.
+// First connected pad = P1; second connected pad = P2.
+function getPads(){
+ return Array.from(navigator.getGamepads?navigator.getGamepads():[])
+  .filter(p=>p&&p.connected)
+  .sort((a,b)=>a.index-b.index)
+  .slice(0,2);
+}
+
+function pressedOnce(pad,buttonIndex,key){
+ const pressed=!!pad.buttons[buttonIndex]?.pressed;
+ const id=pad.index+"-"+key;
+ const was=!!previousButtons[id];
+ previousButtons[id]=pressed;
+ return pressed&&!was;
+}
+
+function pollControllers(){
+ const pads=getPads();
+ const status=document.getElementById("pads");
+
+ if(pads.length===0){
+  status.textContent="Controllers: none connected";
+ }else{
+  status.textContent=pads.map((p,i)=>
+   "P"+(i+1)+": "+p.id.substring(0,35)
+  ).join("  |  ");
+ }
+
+ pads.forEach((pad,player)=>{
+  const x=pad.axes[0]||0;
+  const y=pad.axes[1]||0;
+  const dead=.5;
+
+  if(Math.abs(x)>Math.abs(y)&&Math.abs(x)>dead){
+   setDirection(player,x>0?1:-1,0);
+  }else if(Math.abs(y)>dead){
+   setDirection(player,0,y>0?1:-1);
+  }
+
+  // D-pad
+  if(pad.buttons[12]?.pressed)setDirection(player,0,-1);
+  if(pad.buttons[13]?.pressed)setDirection(player,0,1);
+  if(pad.buttons[14]?.pressed)setDirection(player,-1,0);
+  if(pad.buttons[15]?.pressed)setDirection(player,1,0);
+
+  // Cross button: start or resume
+  if(pressedOnce(pad,0,"cross")){
+   if(!running&&!gameEnded)newGame();
+   else if(paused)togglePause();
+  }
+
+  // Options button: pause or resume
+  if(pressedOnce(pad,9,"options")&&running){
+   togglePause();
+  }
+ });
+}
+
+window.addEventListener("gamepaddisconnected",()=>{
+ document.getElementById("status").textContent="Controller disconnected";
+});
 
 function draw(){
-  const rect=arena.getBoundingClientRect();
-  const w=rect.width;
-  const h=rect.height;
-  ctx.clearRect(0,0,w,h);
+ const rect=arena.getBoundingClientRect();
+ const w=rect.width,h=rect.height;
 
-  // Arena background.
-  ctx.fillStyle="#0b1726";
-  ctx.fillRect(0,0,w,h);
+ ctx.clearRect(0,0,w,h);
+ ctx.fillStyle="#0b1726";
+ ctx.fillRect(0,0,w,h);
 
-  // Grid.
-  ctx.strokeStyle="rgba(148,163,184,.09)";
-  ctx.lineWidth=1;
-  for(let x=0;x<=cols;x++){
-    ctx.beginPath();
-    ctx.moveTo(x*cell,0);
-    ctx.lineTo(x*cell,rows*cell);
-    ctx.stroke();
-  }
-  for(let y=0;y<=rows;y++){
-    ctx.beginPath();
-    ctx.moveTo(0,y*cell);
-    ctx.lineTo(cols*cell,y*cell);
-    ctx.stroke();
-  }
-
-  // Apple.
-  const ax=apple.x*cell+cell/2;
-  const ay=apple.y*cell+cell/2;
-  ctx.fillStyle="#ef4444";
+ // Grid
+ ctx.strokeStyle="rgba(148,163,184,.09)";
+ ctx.lineWidth=1;
+ for(let x=0;x<=cols;x++){
   ctx.beginPath();
-  ctx.arc(ax,ay,cell*.38,0,Math.PI*2);
-  ctx.fill();
-  ctx.fillStyle="#86efac";
-  ctx.fillRect(ax+2,ay-cell*.42,3,cell*.22);
+  ctx.moveTo(x*cell,0);
+  ctx.lineTo(x*cell,rows*cell);
+  ctx.stroke();
+ }
+ for(let y=0;y<=rows;y++){
+  ctx.beginPath();
+  ctx.moveTo(0,y*cell);
+  ctx.lineTo(cols*cell,y*cell);
+  ctx.stroke();
+ }
 
-  // Snakes and labels.
-  snakes.forEach((s,index)=>{
-    if(!s)return;
-    s.body.forEach((p,i)=>{
-      const pad=i===0?1:2;
-      const x=p.x*cell+pad;
-      const y=p.y*cell+pad;
-      const size=cell-pad*2;
-      ctx.fillStyle=i===0?s.color:(index===0?"#16834b":"#2563a8");
-      ctx.beginPath();
-      ctx.roundRect(x,y,size,size,Math.max(3,cell*.2));
-      ctx.fill();
+ // Apple
+ const ax=apple.x*cell+cell/2;
+ const ay=apple.y*cell+cell/2;
+ ctx.fillStyle="#ef4444";
+ ctx.beginPath();
+ ctx.arc(ax,ay,cell*.37,0,Math.PI*2);
+ ctx.fill();
+ ctx.fillStyle="#86efac";
+ ctx.fillRect(ax+2,ay-cell*.42,3,cell*.2);
 
-      if(i===0){
-        ctx.fillStyle="#07111f";
-        const eyeSize=Math.max(2,cell*.09);
-        const ex=x+size*.65;
-        const ey=y+size*.28;
-        ctx.beginPath();
-        ctx.arc(ex,ey,eyeSize,0,Math.PI*2);
-        ctx.fill();
-      }
-    });
+ // Snakes
+ snakes.forEach((s,index)=>{
+  if(!s)return;
 
-    if(s.body.length){
-      const head=s.body[0];
-      ctx.font="bold 12px Arial";
-      ctx.textAlign="center";
-      ctx.lineWidth=3;
-      ctx.strokeStyle="#07111f";
-      ctx.strokeText(names[index],head.x*cell+cell/2,head.y*cell-5);
-      ctx.fillStyle=s.color;
-      ctx.fillText(names[index],head.x*cell+cell/2,head.y*cell-5);
-    }
+  s.body.forEach((p,i)=>{
+   const pad=i===0?1:2;
+   const x=p.x*cell+pad;
+   const y=p.y*cell+pad;
+   const size=cell-pad*2;
+
+   ctx.fillStyle=i===0?s.color:(index===0?"#16834b":"#2563a8");
+   ctx.beginPath();
+   ctx.roundRect(x,y,size,size,Math.max(3,cell*.2));
+   ctx.fill();
   });
 
-  if(paused && running){
-    ctx.fillStyle="#07111fc9";
-    ctx.fillRect(0,0,w,h);
-    ctx.fillStyle="white";
-    ctx.font="bold 32px Arial";
-    ctx.textAlign="center";
-    ctx.fillText("PAUSED",w/2,h/2);
+  if(s.body.length){
+   const head=s.body[0];
+   ctx.font="bold 12px Arial";
+   ctx.textAlign="center";
+   ctx.lineWidth=3;
+   ctx.strokeStyle="#07111f";
+   ctx.strokeText(names[index],head.x*cell+cell/2,head.y*cell-5);
+   ctx.fillStyle=s.color;
+   ctx.fillText(names[index],head.x*cell+cell/2,head.y*cell-5);
   }
+ });
+
+ if(paused&&running){
+  ctx.fillStyle="#07111fbb";
+  ctx.fillRect(0,0,w,h);
+  ctx.fillStyle="white";
+  ctx.font="bold 32px Arial";
+  ctx.textAlign="center";
+  ctx.fillText("PAUSED",w/2,h/2);
+ }
 }
-
-// Keyboard controls.
-window.addEventListener("keydown",e=>{
-  const k=e.key.toLowerCase();
-
-  const keys=[
-    "arrowup","arrowdown","arrowleft","arrowright",
-    "w","a","s","d"," "
-  ];
-  if(keys.includes(k))e.preventDefault();
-
-  if(k==="w")setDirection(0,0,-1);
-  if(k==="s")setDirection(0,0,1);
-  if(k==="a")setDirection(0,-1,0);
-  if(k==="d")setDirection(0,1,0);
-
-  if(k==="arrowup")setDirection(1,0,-1);
-  if(k==="arrowdown")setDirection(1,0,1);
-  if(k==="arrowleft")setDirection(1,-1,0);
-  if(k==="arrowright")setDirection(1,1,0);
-
-  if(k===" "){
-    if(!running && !gameEnded)newGame();
-    else togglePause();
-  }
-  if(k==="escape")togglePause();
-  if(k==="r")newGame();
-});
-
-// PS5 / standard gamepad support.
-function pollControllers(){
-  const pads=Array.from(navigator.getGamepads ? navigator.getGamepads() : [])
-    .filter(p=>p && p.connected)
-    .sort((a,b)=>a.index-b.index);
-
-  connectedPads=pads;
-
-  const status=document.getElementById("controllerStatus");
-  status.textContent="Controllers connected: "+pads.length+
-    " / 2"+(pads.length>=2?" — Ready!":" — Connect another controller");
-
-  pads.slice(0,2).forEach((pad,player)=>{
-    const deadzone=.45;
-    const x=pad.axes[0]||0;
-    const y=pad.axes[1]||0;
-
-    // Left stick.
-    if(Math.abs(x)>Math.abs(y) && Math.abs(x)>deadzone){
-      setDirection(player,x>0?1:-1,0);
-    }else if(Math.abs(y)>deadzone){
-      setDirection(player,0,y>0?1:-1);
-    }
-
-    // D-pad buttons.
-    if(pad.buttons[12]?.pressed)setDirection(player,0,-1);
-    if(pad.buttons[13]?.pressed)setDirection(player,0,1);
-    if(pad.buttons[14]?.pressed)setDirection(player,-1,0);
-    if(pad.buttons[15]?.pressed)setDirection(player,1,0);
-
-    // Cross button starts the game or resumes it.
-    if(pad.buttons[0]?.pressed){
-      if(!running && !gameEnded)newGame();
-      else if(paused)togglePause();
-    }
-
-    // Options button pauses/resumes.
-    if(pad.buttons[9]?.pressed && running){
-      if(!pad._optionsWasPressed)togglePause();
-    }
-    pad._optionsWasPressed=!!pad.buttons[9]?.pressed;
-  });
-}
-
-window.addEventListener("gamepadconnected",()=>{
-  document.getElementById("status").textContent="Controller connected!";
-});
-window.addEventListener("gamepaddisconnected",()=>{
-  document.getElementById("status").textContent="A controller disconnected";
-});
 
 function loop(time){
-  requestAnimationFrame(loop);
-  pollControllers();
+ requestAnimationFrame(loop);
+ pollControllers();
 
-  if(running && !paused && !gameEnded){
-    const delta=Math.min(time-lastTime,250);
-    accumulator+=delta;
-    while(accumulator>=STEP_MS){
-      gameTick();
-      accumulator-=STEP_MS;
-    }
+ if(running&&!paused&&!gameEnded){
+  const delta=Math.min(time-lastTime,250);
+  accumulator+=delta;
+
+  while(accumulator>=STEP){
+   gameTick();
+   accumulator-=STEP;
+   if(!running)break;
   }
-  lastTime=time;
-  draw();
+ }
+ lastTime=time;
+ draw();
 }
 
-document.getElementById("startBtn").addEventListener("click",()=>{
-  saveNames();
-  newGame();
-});
-document.getElementById("saveBtn").addEventListener("click",saveNames);
-document.getElementById("againBtn").addEventListener("click",newGame);
-document.getElementById("editBtn").addEventListener("click",showMenu);
-document.getElementById("menuBtn").addEventListener("click",showMenu);
-document.getElementById("pauseBtn").addEventListener("click",togglePause);
+// Buttons
+document.getElementById("startBtn").onclick=newGame;
+document.getElementById("saveBtn").onclick=saveNames;
+document.getElementById("againBtn").onclick=newGame;
+document.getElementById("editBtn").onclick=showMenu;
+document.getElementById("menuBtn").onclick=showMenu;
+document.getElementById("pauseBtn").onclick=togglePause;
 
+// Live name editing
 nameInputs.forEach(input=>{
-  input.addEventListener("input",()=>{
-    names=[
-      cleanName(nameInputs[0].value)||"PLAYER 1",
-      cleanName(nameInputs[1].value)||"PLAYER 2"
-    ];
-    updateNameDisplays();
-    if(running)draw();
-  });
+ input.addEventListener("input",()=>{
+  names=[
+   cleanName(nameInputs[0].value)||"PLAYER 1",
+   cleanName(nameInputs[1].value)||"PLAYER 2"
+  ];
+  updateNameDisplay();
+  draw();
+ });
 });
 
 loadNames();
